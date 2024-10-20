@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Heart, MapPin, Tag, User } from 'lucide-react';
 import { Ad } from '../types/Ad';
 import { useAuth } from '../contexts/AuthContext';
 import { saveAd, unsaveAd } from '../services/adService';
@@ -10,13 +10,27 @@ interface ProductGridProps {
   ads: Ad[];
 }
 
+const CACHE_KEY = 'productGridCache';
+const CACHE_EXPIRY = 30 * 60 * 1000; // 30 minutes in milliseconds
+
 const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
   const { user } = useAuth();
   const [sellersData, setSellersData] = useState<{[key: string]: string}>({});
   const [savedAds, setSavedAds] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchSellersData = async () => {
+    const fetchAndCacheData = async () => {
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      const now = new Date().getTime();
+
+      if (cachedData) {
+        const { timestamp, data } = JSON.parse(cachedData);
+        if (now - timestamp < CACHE_EXPIRY) {
+          setSellersData(data.sellersData);
+          return;
+        }
+      }
+
       const sellersInfo: {[key: string]: string} = {};
       for (const ad of ads) {
         if (!sellersInfo[ad.userId]) {
@@ -29,10 +43,15 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
           }
         }
       }
+
       setSellersData(sellersInfo);
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        timestamp: now,
+        data: { sellersData: sellersInfo }
+      }));
     };
 
-    fetchSellersData();
+    fetchAndCacheData();
 
     // Initialize savedAds
     if (user) {
@@ -60,9 +79,26 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
     }
   };
 
+  const preloadImage = (src: string) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = src;
+    });
+  };
+
+  useEffect(() => {
+    ads.forEach(ad => {
+      if (ad.images && ad.images.length > 0) {
+        preloadImage(ad.images[0]).catch(error => console.error('Error preloading image:', error));
+      }
+    });
+  }, [ads]);
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-      {ads.map((ad) => (
+      {ads.slice(0, 20).map((ad) => (
         <Link to={`/product/${ad.id}`} key={ad.id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-64">
           <div className="relative h-40">
             <img src={ad.images[0]} alt={ad.title} className="w-full h-full object-cover" />
@@ -88,8 +124,13 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
               <p className="text-orange-500 font-bold text-sm">{ad.price.toLocaleString()} Frw</p>
             </div>
             <div>
-              <p className="text-gray-500 text-xs truncate">{ad.location}</p>
-              <p className="text-orange-500 text-xs truncate">Seller: {sellersData[ad.userId] || 'Loading...'}</p>
+              <p className="bg-gray-100 text-gray-700 text-xs p-1 rounded-md mb-1 flex items-center">
+                <MapPin size={12} className="mr-1" /> <span className="font-semibold mr-2">{ad.location}</span>
+                <Tag size={12} className="mr-1" /> <span className="text-gray-600">{ad.condition}</span>
+              </p>
+              <p className="text-orange-500 text-xs truncate flex items-center">
+                <User size={16} className="mr-1" /> {sellersData[ad.userId] || 'Loading...'}
+              </p>
             </div>
           </div>
         </Link>

@@ -58,7 +58,7 @@ const SearchPage = () => {
       ) : searchResults.length === 0 ? (
         <p>No results found.</p>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {searchResults.map((ad) => (
                 
                 <div key={ad.id} className="border rounded-lg p-4 shadow-md">
@@ -66,8 +66,8 @@ const SearchPage = () => {
                   <img src={ad.images[0]} alt={ad.title} className="w-full h-48 object-cover mb-2 rounded" />
                 )}
                 <h2 className="text-lg font-semibold">{ad.title}</h2>
-                <p className="text-gray-600">{ad.description.substring(0, 100)}...</p>
-                <p className="text-orange-500 font-bold mt-2">UGX {ad.price.toLocaleString()}</p>
+                <p className="text-gray-600">{ad.description.substring(0, 20)}...</p>
+                <p className="text-orange-500 font-bold mt-2"> {ad.price.toLocaleString()} Frw</p>
                 <div className="mt-2 flex justify-between items-center">
                   <span className="text-sm text-gray-500">{ad.condition}</span>
                   <span className="text-sm text-gray-500">{ad.location}</span>

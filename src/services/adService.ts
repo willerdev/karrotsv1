@@ -173,3 +173,24 @@ export const getProductById = async (id: string): Promise<Ad | null> => {
     throw error;
   }
 };
+
+export const sendAdConfirmationEmail = async (email: string, ad: Ad, title: string) => {
+  try {
+    const response = await fetch('./api/send-ad-confirmation-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, ad, title }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to send confirmation email');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error sending confirmation email:', error);
+    throw error;
+  }
+};

@@ -3,6 +3,7 @@ import LocalProductGrid from '../components/LocalProductGrid';
 import { Ad } from '../types/Ad';
 import { collection, query, limit, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
+import LoadingScreen from '../components/LoadingScreen';
 
 const Locals = () => {
   const [localAds, setLocalAds] = useState<Ad[]>([]);
@@ -13,7 +14,7 @@ const Locals = () => {
     const fetchLocalAds = async () => {
       try {
         const adsRef = collection(db, 'ads');
-        const q = query(adsRef, orderBy('createdAt', 'desc'), limit(10)); // Fetch 10 most recent ads
+        const q = query(adsRef, orderBy('createdAt', 'desc'), limit(10));
         const querySnapshot = await getDocs(q);
         const ads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
         setLocalAds(ads);
@@ -28,7 +29,7 @@ const Locals = () => {
     fetchLocalAds();
   }, []);
 
-  if (loading) return <div className="text-center py-8">Loading local ads...</div>;
+  if (loading) return <LoadingScreen />;
   if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
 
   return (

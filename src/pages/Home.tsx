@@ -6,6 +6,7 @@ import CategoryList from '../components/CategoryList';
 import ProductGrid from '../components/ProductGrid';
 import CategoryGrid from '../components/CategoryGrid';
 import SearchBar from '../components/SearchBar';
+import LoadingScreen from '../components/LoadingScreen';
 
 const Home = () => {
   const [showLocationPopup, setShowLocationPopup] = useState(false);
@@ -18,7 +19,7 @@ const Home = () => {
     const fetchAds = async () => {
       try {
         const adsRef = collection(db, 'ads');
-        const q = query(adsRef, limit(8)); // Fetch 8 ads for the home page
+        const q = query(adsRef, limit(50)); // Fetch 8 ads for the home page
         const querySnapshot = await getDocs(q);
         const fetchedAds: Ad[] = [];
         querySnapshot.forEach((doc) => {
@@ -67,7 +68,7 @@ const Home = () => {
               />
             </div>
             <h2 className="text-2xl font-bold mb-4">Trending ads</h2>
-            {loading && <div>Loading ads...</div>}
+            {loading && <LoadingScreen />}
             {error && <div className="text-red-500">{error}</div>}
             {!loading && !error && <ProductGrid ads={ads} />}
           </div>

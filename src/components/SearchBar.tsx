@@ -56,7 +56,7 @@ const SearchBar = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <button type="submit" className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-            <Search size={24} />
+            <Search size={18} />
           </button>
         </form>
         {!searchTerm && (

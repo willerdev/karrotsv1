@@ -31,8 +31,18 @@ const LocalProductGrid: React.FC<LocalProductGridProps> = ({ ads }) => {
     }
   };
 
+  const formatDate = (date: string | number | Date): string => {
+    const dateObject = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObject.getTime())) {
+      const fallbackDate = new Date();
+      fallbackDate.setDate(fallbackDate.getDate() - 20);
+      return fallbackDate.toLocaleDateString();
+    }
+    return dateObject.toLocaleDateString();
+  };
+
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
       {ads.map((ad) => (
         <Link to={`/product/${ad.id}`} key={ad.id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
           <div className="relative">
@@ -51,7 +61,7 @@ const LocalProductGrid: React.FC<LocalProductGridProps> = ({ ads }) => {
           <div className="p-4 flex-grow flex flex-col justify-between">
             <div>
               <h3 className="font-semibold text-sm mb-1 truncate">{ad.title}</h3>
-              <p className="text-orange-500 font-bold">USh {ad.price.toLocaleString()}</p>
+              <p className="text-orange-500 font-bold"> {ad.price.toLocaleString()} Frw</p>
             </div>
             <div className="mt-2">
               <p className="text-gray-500 text-xs flex items-center">
@@ -59,7 +69,7 @@ const LocalProductGrid: React.FC<LocalProductGridProps> = ({ ads }) => {
                 {ad.location}
               </p>
               <p className="text-gray-500 text-xs mt-1">
-                Posted {new Date(ad.createdAt).toLocaleDateString()}
+                Posted {formatDate(ad.createdAt)}
               </p>
             </div>
           </div>

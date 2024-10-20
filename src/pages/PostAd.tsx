@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { postAd } from '../services/adService';
+import { postAd, sendAdConfirmationEmail } from '../services/adService';
 import ImageUpload from '../components/ImageUpload';
 import { AlertCircle, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,8 +8,9 @@ import { storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { categories } from '../data/categories';
+import { Ad } from '../types/Ad'; // Add this import
 
-const PostAd = () => {
+const PostAd: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
@@ -74,16 +75,43 @@ const PostAd = () => {
         description,
         price: Number(price),
         category,
-        subcategory: subcategory || null, // Add subcategory, use null if not selected
-        condition: condition as "new" | "used",
+        subcategory: subcategory || null,
+        condition: condition as "new" | "used" | "refurbished" | "used_s_class" | "used_a_class" | "used_b_grade" | "used_cracked" | "for_parts",
         negotiable,
         images: uploadedImageUrls,
         location,
         userId: user.uid
       };
 
-      await postAd(adData);
-      navigate('/dashboard');
+      const postedAd = await postAd(adData);
+
+      // Send confirmation email
+      if (user.email) {
+        try {
+          const partialAdData: Omit<Ad, 'id'> = {
+            title,
+            description,
+            price: Number(price),
+            category,
+            subcategory: subcategory || null,
+            condition: condition as Ad['condition'],
+            negotiable,
+            images: uploadedImageUrls,
+            location,
+            userId: user.uid,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            status: 'active',
+            views: 0,
+            savedBy: []
+          };
+          await sendAdConfirmationEmail(user.email, partialAdData as Ad, title);
+        } catch (emailError) {
+          console.error("Error sending confirmation email:", emailError);
+        }
+      }
+
+      navigate('/locals');
     } catch (err: any) {
       console.error("Error posting ad:", err);
       setError(err.message || 'Failed to post ad. Please try again.');
@@ -103,7 +131,7 @@ const PostAd = () => {
   }
 
   if (!user) {
-    return null;
+    return <div>Please log in to post an ad.</div>;
   }
 
   return (

@@ -1,23 +1,39 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Car, Home, Smartphone, Laptop, Sofa, ShoppingBag, Dumbbell, Briefcase, Baby, Dog, Carrot } from 'lucide-react';
-
+import plusIcon from '../icons/post-ad.png';
+import carIcon from '../icons/vehicles.png';
+import homeIcon from '../icons/home.png';
+import smartphoneIcon from '../icons/phones.png';
+import laptopIcon from '../icons/electronics.png';
+import sofaIcon from '../icons/home.png';
+import shoppingBagIcon from '../icons/fashion.png';
+import dumbbellIcon from '../icons/sports.png';
+import briefcaseIcon from '../icons/jobs.png';
+import dogIcon from '../icons/health.png';
+import babiesIcon from '../icons/health.png';
+// import agricultureIcon from '../icons/agriculture.png';
+import repair from '../icons/repair.png';
+import healthIcon from '../icons/health.png';
+import equipmentIcon from '../icons/equipment.png';
 const categories = [
-  { name: 'Post ad', icon: Plus, color: 'bg-red-500', link: '/post-ad' },
-  { name: 'Vehicles', icon: Car },
-  { name: 'Property', icon: Home },
-  { name: 'Phones & Tablets', icon: Smartphone },
-  { name: 'Electronics', icon: Laptop },
-  { name: 'Home, Appliances & Furniture', icon: Sofa },
-  { name: 'Health & Beauty', icon: ShoppingBag },
-  { name: 'Fashion', icon: ShoppingBag },
-  { name: 'Sports, Arts & Outdoors', icon: Dumbbell },
-  { name: 'Seeking Work CVs', icon: Briefcase },
-  { name: 'Services', icon: Briefcase },
-  { name: 'Jobs', icon: Briefcase },
-  { name: 'Babies & Kids', icon: Baby },
-  { name: 'Pets', icon: Dog },
-  { name: 'Agriculture & Food', icon: Carrot },
+  { name: 'Post ad', icon: plusIcon,  link: '/post-ad' },
+  { name: 'Vehicles', icon: carIcon },
+  { name: 'Property', icon: homeIcon },
+  { name: 'Phones & Tablets', icon: smartphoneIcon },
+  { name: 'Electronics', icon: laptopIcon },
+  { name: 'Home, Appliances & Furniture', icon: sofaIcon },
+  { name: 'Health & Beauty', icon: healthIcon },
+  { name: 'Fashion', icon: shoppingBagIcon },
+  { name: 'Sports, Arts & Outdoors', icon: dumbbellIcon },
+  { name: 'Services', icon: briefcaseIcon },
+  { name: 'Jobs', icon: briefcaseIcon },
+  { name: 'Pets', icon: dogIcon },
+  { name: 'Babies', icon: babiesIcon },
+  // { name: 'Agriculture', icon: agricultureIcon },
+  { name: 'Repair', icon: repair },
+  { name: 'Equipment', icon: equipmentIcon },
+
+  
 ];
 
 const CategoryGrid = () => {
@@ -27,10 +43,10 @@ const CategoryGrid = () => {
         <Link
           key={index}
           to={category.link || `/category/${category.name.toLowerCase().replace(/\s+/g, '-')}`}
-          className="flex flex-col items-center"
+          className="flex flex-col items-center border border-gray-300 p-2 rounded"
         >
-          <div className={`w-16 h-16 rounded-full ${category.color || 'bg-gray-200'} flex items-center justify-center mb-2`}>
-            <category.icon size={24} className={category.name === 'Post ad' ? 'text-white' : 'text-gray-600'} />
+          <div className={`w-14 h-16 rounded-full flex items-center justify-center mb-2`}>
+            <img src={category.icon} alt={category.name} className={`w-12 h-12 ${category.name === 'Post ad' ? 'text-white' : 'text-gray-600'}`} />
           </div>
           <span className="text-center text-sm">{category.name}</span>
         </Link>
