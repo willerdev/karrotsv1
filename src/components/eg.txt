@@ -1,0 +1,22 @@
+// ... existing imports ...
+import { FaMapMarkerAlt } from 'react-icons/fa';
+
+const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser }) => {
+  // ... existing state and useEffect ...
+
+  const handleShareLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const locationMessage = `My location: ${position.coords.latitude}, ${position.coords.longitude}`;
+        setNewMessage(locationMessage);
+      });
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
+  };
+
+  // ... rest of the component ...
+};
+
+export default ChatWindow;
+<button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full bg-orange-500 text-white">
