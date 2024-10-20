@@ -19,16 +19,27 @@ const Dashboard = () => {
         return;
       }
 
-      try {
-        const [userAdsData, savedAdsData] = await Promise.all([getUserAds(), getSavedAds()]);
-        setUserAds(userAdsData);
-        setSavedAds(savedAdsData);
-      } catch (err) {
-        console.error('Error fetching ads:', err);
-        setError('Failed to fetch ads. Please try again later.');
-      } finally {
-        setLoading(false);
+      const maxRetries = 3;
+      let retries = 0;
+
+      while (retries < maxRetries) {
+        try {
+          const [userAdsData, savedAdsData] = await Promise.all([getUserAds(), getSavedAds()]);
+          setUserAds(userAdsData);
+          setSavedAds(savedAdsData);
+          setLoading(false);
+          return;
+        } catch (err) {
+          console.error(`Error fetching ads (attempt ${retries + 1}):`, err);
+          retries++;
+          if (retries === maxRetries) {
+            setError('Failed to fetch ads. Please check your internet connection and try again later.');
+          }
+          // Wait for 2 seconds before retrying
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
       }
+      setLoading(false);
     };
 
     fetchAds();

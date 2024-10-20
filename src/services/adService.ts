@@ -62,31 +62,22 @@ export const getAds = async (page: number = 1): Promise<Ad[]> => {
   }
 };
 
-export const getUserAds = async (page: number = 1): Promise<Ad[]> => {
+export const getUserAds = async (userId: string): Promise<Ad[]> => {
   try {
-    const user = auth.currentUser;
-    if (!user) {
-      throw new Error('User must be logged in to fetch ads');
-    }
-
-    const adsRef = collection(db, "ads");
+    const adsRef = collection(db, 'ads');
     const q = query(
       adsRef,
-      where("userId", "==", user.uid),
-      orderBy("createdAt", "desc"),
-      limit(ITEMS_PER_PAGE * page)
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
     );
+    
     const querySnapshot = await getDocs(q);
-
-    const userAds = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
-
-    // Update cache
-    localStorage.setItem(ADS_CACHE_KEY, JSON.stringify(userAds));
-    localStorage.setItem('ads_cache_timestamp', Date.now().toString());
-
-    return userAds;
-  } catch (error) {
-    console.error("Error fetching user ads:", error);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
+  } catch (error: any) {
+    if (error.code === 'failed-precondition' || error.code === 'resource-exhausted') {
+      console.error('Firestore index error:', error);
+      throw new Error('Database index is being created. Please try again in a few minutes.');
+    }
     throw error;
   }
 };
