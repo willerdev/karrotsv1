@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { collection, query, getDocs, orderBy, startAt, endAt } from 'firebase/firestore';
 import { db } from '../firebase'; // Ensure this path is correct
+import LoadingScreen from '../components/LoadingScreen';
 
 // Add this interface at the top of your file
 interface Ad {
@@ -54,7 +55,7 @@ const SearchPage = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-4">Search Results</h1>
       {loading ? (
-        <p>Loading...</p>
+        <LoadingScreen />
       ) : searchResults.length === 0 ? (
         <p>No results found.</p>
       ) : (

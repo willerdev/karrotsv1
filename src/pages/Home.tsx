@@ -7,6 +7,8 @@ import ProductGrid from '../components/ProductGrid';
 import CategoryGrid from '../components/CategoryGrid';
 import SearchBar from '../components/SearchBar';
 import LoadingScreen from '../components/LoadingScreen';
+import { Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Home = () => {
   const [showLocationPopup, setShowLocationPopup] = useState(false);
@@ -14,6 +16,7 @@ const Home = () => {
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFullButton, setShowFullButton] = useState(true);
 
   useEffect(() => {
     const fetchAds = async () => {
@@ -35,6 +38,16 @@ const Home = () => {
     };
 
     fetchAds();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      setShowFullButton(scrollPosition < 100);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const toggleLocationPopup = () => {
@@ -93,6 +106,17 @@ const Home = () => {
           </div>
         </div>
       )}
+
+      <Link
+        to="/post-ad"
+        className={`fixed bottom-20 right-4 bg-orange-500 text-white rounded-full shadow-lg hover:bg-orange-600 transition-all duration-300 flex items-center ${
+          showFullButton ? 'px-4 py-3' : 'p-3'
+        }`}
+        aria-label="Post Ad"
+      >
+        <Plus size={24} className={showFullButton ? 'mr-2' : ''} />
+        {showFullButton && <span className="whitespace-nowrap">Post a karrot</span>}
+      </Link>
     </div>
   );
 };

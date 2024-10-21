@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Slider, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sliders, ChevronDown, ChevronUp } from 'lucide-react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Ad } from '../types/Ad';
 import ProductGrid from '../components/ProductGrid';
+import LoadingScreen from '../components/LoadingScreen';
 
 const CategoryPage = () => {
   const { categoryName } = useParams<{ categoryName: string }>();
@@ -37,7 +38,7 @@ const CategoryPage = () => {
         querySnapshot.forEach((doc) => {
           const adData = doc.data() as Ad;
           if (adData.price >= priceRange[0] && adData.price <= priceRange[1]) {
-            fetchedAds.push({ id: doc.id, ...adData });
+            fetchedAds.push({ ...adData, id: doc.id });
           }
         });
         setAds(fetchedAds);
@@ -131,7 +132,7 @@ const CategoryPage = () => {
         </div>
       )}
 
-      {loading && <div>Loading ads...</div>}
+      {loading && <LoadingScreen />}
       {error && <div className="text-red-500">{error}</div>}
       {!loading && !error && (
         <>

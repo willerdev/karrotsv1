@@ -6,6 +6,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { User } from '../types/User';
 import Modal from '../components/Modal';
+import LoadingScreen from '../components/LoadingScreen';
 
 // Add this type definition
 type RecentlyViewedItem = {
@@ -82,12 +83,12 @@ const Profile = () => {
     setShowEditModal(false);
   };
 
-  if (loading) return <div className="text-center py-8">Loading user data...</div>;
+  if (loading) return <LoadingScreen />;
   if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
   if (!userData) return <div className="text-center py-8">No user data available</div>;
 
   return (
-    <div className="bg-white text-orange-600 min-h-screen">
+    <div className="bg-white text-orange-600 min-h-screen relative pb-20">
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col items-center mb-8">
           <div className="w-32 h-32 bg-orange-100 rounded-full flex items-center justify-center mb-4">
@@ -193,9 +194,10 @@ const Profile = () => {
 
         <button
           onClick={handleLogout}
-          className=" bg-red-500 text-white py-2 rounded-sm"
+          className="fixed bottom-20 right-8 bg-red-500 text-white p-3 rounded-full shadow-lg hover:bg-red-600 transition-colors duration-300"
+          aria-label="Logout"
         >
-          Logout
+          <LogOut size={24} />
         </button>
       </div>
 
