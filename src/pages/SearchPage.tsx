@@ -21,6 +21,7 @@ const SearchPage = () => {
   const [searchResults, setSearchResults] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const searchQuery = new URLSearchParams(location.search).get('q');
@@ -53,6 +54,20 @@ const SearchPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+            <div className="mb-8">
+          {!imageError ? (
+            <img 
+              src="https://i0.wp.com/blog.karrotmarket.com/wp-content/uploads/2024/10/spotting-real-deals-a-guide-for-savvy-shoppers.webp?fit=2048%2C1024&ssl=1" 
+              alt="Featured banner" 
+              className="w-full h-48 object-cover rounded-lg" 
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+              <p className="text-gray-500">Failed to load banner image</p>
+            </div>
+          )}
+        </div>
       <h1 className="text-2xl font-bold mb-4">Search Results</h1>
       {loading ? (
         <LoadingScreen />
@@ -60,6 +75,7 @@ const SearchPage = () => {
         <p>No results found.</p>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      
           {searchResults.map((ad) => (
                 
                 <div key={ad.id} className="border rounded-lg p-4 shadow-md">

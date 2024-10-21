@@ -24,6 +24,7 @@ const Profile = () => {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedItem[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editField, setEditField] = useState('');
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -95,7 +96,11 @@ const Profile = () => {
             {userData.profilePictureUrl ? (
               <img src={userData.profilePictureUrl} alt="Profile" className="w-full h-full object-cover rounded-full" />
             ) : (
-              <Camera size={64} className="text-orange-500" />
+              <img 
+                src="https://downloadr2.apkmirror.com/wp-content/uploads/2023/02/30/63ec3579b1618.png" 
+                alt="Default Profile" 
+                className="w-full h-full object-cover rounded-full"
+              />
             )}
           </div>
           <h1 className="text-2xl font-bold">{userData.name}</h1>
@@ -103,10 +108,19 @@ const Profile = () => {
         </div>
 
         {/* O Pay Section */}
-        <div className="bg-orange-100 rounded-lg p-4 mb-6">
-          <h2 className="text-lg font-semibold mb-2">O Pay</h2>
-          <p>Your current balance: $0.00</p>
-          <button className="mt-2 bg-orange-500 text-white px-4 py-2 rounded-lg">Add Funds</button>
+        <div className="mb-8">
+          {!imageError ? (
+            <img 
+              src="https://i0.wp.com/blog.karrotmarket.com/wp-content/uploads/2024/08/the-ethical-side-of-secondhand-shopping-how-honesty-and-community-can-transform-your-experience.webp?fit=1792%2C1024&ssl=1" 
+              alt="Featured banner" 
+              className="w-full h-48 object-cover rounded-lg" 
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+              <p className="text-gray-500">Failed to load banner image</p>
+            </div>
+          )}
         </div>
 
         {/* Recently Viewed Section */}
