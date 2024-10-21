@@ -5,6 +5,7 @@ import { Ad } from '../types/Ad';
 import { useAuth } from '../contexts/AuthContext';
 import { saveAd, unsaveAd } from '../services/adService';
 import { getUserById } from '../services/userService'; // Assume this function exists
+import toast from 'react-hot-toast'; // Add this import
 
 interface ProductGridProps {
   ads: Ad[];
@@ -62,7 +63,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
   const handleSaveAd = async (e: React.MouseEvent, ad: Ad) => {
     e.preventDefault();
     if (!user) {
-      // Redirect to login page or show a login prompt
+      toast.error('Please log in to save ads');
+      // Optionally redirect to login page here
       return;
     }
 
@@ -70,12 +72,15 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
       if (savedAds.includes(ad.id)) {
         await unsaveAd(ad.id);
         setSavedAds(prev => prev.filter(id => id !== ad.id));
+        toast.success('Ad removed from favorites');
       } else {
         await saveAd(ad.id);
         setSavedAds(prev => [...prev, ad.id]);
+        toast.success('Ad added to favorites');
       }
     } catch (error) {
       console.error('Error saving/unsaving ad:', error);
+      toast.error('An error occurred. Please try again.');
     }
   };
 
