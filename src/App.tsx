@@ -37,6 +37,7 @@ import Events from './pages/Events';
 import WhatsNew from './pages/WhatsNew';
 import SearchPage from './pages/SearchPage';
 import ChatPage from './pages/ChatPage';
+import DeliveryServices from './pages/DeliveryServices';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -65,11 +66,12 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/post-ad" element={<ProtectedRoute><PostAd /></ProtectedRoute>} />
-              <Route path="/chat" element={<ProtectedRoute><Chat conversations={[]} /></ProtectedRoute>} />
+              <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/edit-profile/:section" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><SavedAds /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+              <Route path="/delivery-services" element={<DeliveryServices />} />
               <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/category/:categoryName" element={<CategoryPage />} />
               <Route path="/about" element={<About />} />

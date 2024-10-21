@@ -5,12 +5,13 @@ import carIcon from '../icons/vehicles.png';
 import homeIcon from '../icons/home.png';
 import smartphoneIcon from '../icons/phones.png';
 import laptopIcon from '../icons/electronics.png';
-import sofaIcon from '../icons/home.png';
+import sofaIcon from '../icons/homea.png';
 import shoppingBagIcon from '../icons/fashion.png';
 import dumbbellIcon from '../icons/sports.png';
-import briefcaseIcon from '../icons/jobs.png';
+import briefcaseIcon from '../icons/services.png';
 import dogIcon from '../icons/health.png';
 import babiesIcon from '../icons/health.png';
+import jobsIcon from '../icons/jobs.png';
 // import agricultureIcon from '../icons/agriculture.png';
 import repair from '../icons/repair.png';
 import healthIcon from '../icons/health.png';
@@ -26,7 +27,7 @@ const categories = [
   { name: 'Fashion', icon: shoppingBagIcon },
   { name: 'Sports, Arts & Outdoors', icon: dumbbellIcon },
   { name: 'Services', icon: briefcaseIcon },
-  { name: 'Jobs', icon: briefcaseIcon },
+  { name: 'Jobs', icon: jobsIcon },
   { name: 'Pets', icon: dogIcon },
   { name: 'Babies', icon: babiesIcon },
   // { name: 'Agriculture', icon: agricultureIcon },

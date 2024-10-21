@@ -137,7 +137,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser }) => {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message"
-            className="flex-1 p-2 rounded-md"
+            className="w-[70%] p-2 rounded-md"
           />
           <label className="cursor-pointer">
             <FaImage className="text-orange-500 text-xl" />

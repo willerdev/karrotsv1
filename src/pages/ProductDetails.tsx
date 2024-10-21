@@ -7,7 +7,7 @@ import { db } from '../firebase';
 import { Ad } from '../types/Ad';
 import { User } from '../types/User';
 import { Dialog, Transition } from '@headlessui/react';
-
+import LoadingScreen from '../components/LoadingScreen';
 const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -236,12 +236,12 @@ const ProductDetails: React.FC = () => {
     setIsPaymentModalOpen(false);
   };
 
-  if (loading) return <div className="text-center py-8">Loading product details...</div>;
+  if (loading) return <LoadingScreen />;
   if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
   if (!product) return <div className="text-center py-8">Product not found</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
+    <div className="max-w-4xl mx-auto p-4 mb-20"> {/* Added mb-20 for bottom margin */}
       <h1 className="text-2xl font-bold mb-4">{product.title}</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
@@ -270,7 +270,10 @@ const ProductDetails: React.FC = () => {
             <MapPin size={20} className="mr-2 text-gray-500" />
             <span>{product.location}</span>
           </div>
-          <p className="text-gray-700 mb-4">{product.description}</p>
+          <div className="mb-4">
+            <h3 className="text-sm font-medium text-gray-500 mb-1">DESCRIPTION</h3>
+            <p className="text-gray-700">{product.description}</p>s
+          </div>
           <div className="flex space-x-2 mb-4">
             {product.negotiable ? (
               <button
@@ -328,6 +331,34 @@ const ProductDetails: React.FC = () => {
               )}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Product details section */}
+      <div className="mt-8 grid grid-cols-2 gap-4">
+        <div>
+          <p className="text-sm text-gray-500">BRAND</p>
+          <p>{product.brand}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">MODEL</p>
+          <p>{product.model}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">CONDITION</p>
+          <p>{product.condition}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">SECOND CONDITION</p>
+          <p>{product.secondCondition}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">INTERNAL STORAGE</p>
+          <p>{product.internalStorage} GB</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">RAM</p>
+          <p>{product.ram} GB</p>
         </div>
       </div>
 

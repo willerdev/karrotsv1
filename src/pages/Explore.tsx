@@ -1,86 +1,60 @@
+//const GOOGLE_MAPS_API_KEY = 'AIzaSyCIRjn9GL-E-eKxxsrgq2jiT0ux0tRNFjM';
+
 import React, { useState, useEffect } from 'react';
-import Map, { Marker, Popup } from 'react-map-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import LoadingScreen from '../components/LoadingScreen';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import {
-  MapPin,
-  Coffee,
-  Stethoscope,
-  ShoppingBag,
-  Utensils,
-  School,
-  Fuel,
-  Building2,
-  Hotel,
-  Car,
-  ChevronUp,
-  Filter,
-  X,
-  Crosshair
+  MapPin, Coffee, Stethoscope, ShoppingBag, Utensils, School,
+  Fuel, Building2, Hotel, Car, ChevronUp, Filter, Crosshair
 } from 'lucide-react';
-import axios from 'axios';
 
-const MAPBOX_TOKEN = 'pk.eyJ1Ijoid2lsbGVyMjU2IiwiYSI6ImNtMmc0aGsyMjBmZGcyanF5dDBub2p6ZDkifQ.YE8sYueo0-MDpSvYXDyflg'; // Replace with your Mapbox token
+const GOOGLE_MAPS_API_KEY = 'AIzaSyCIRjn9GL-E-eKxxsrgq2jiT0ux0tRNFjM';
 
-// Add this interface above the component
 interface Category {
   name: string;
   icon: React.ComponentType<React.ComponentProps<'svg'> & { size?: number | string }>;
 }
 
-// Add this interface near the top of the file, with other interfaces
-interface Marker {
-  id: string | number;
+interface MarkerData {
+  id: string;
   lat: number;
   lng: number;
   name?: string;
   description?: string;
 }
 
-// Add this interface near the top of the file, with other interfaces
-interface Product {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  rating: number;
-}
-
-const Explore = () => {
-  const [viewState, setViewState] = useState({
-    latitude: -1.2921, // Default to Nairobi, Kenya
-    longitude: 36.8219,
-    zoom: 14
-  });
-
+const Explore: React.FC = () => {
+  const [center, setCenter] = useState({ lat: -1.2921, lng: 36.8219 });
+  const [zoom, setZoom] = useState(14);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [markers, setMarkers] = useState<Marker[]>([]);
-  const [selectedMarker, setSelectedMarker] = useState<Marker | null>(null);
-  const [showDataModal, setShowDataModal] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [markers, setMarkers] = useState<MarkerData[]>([]);
+  const [selectedMarker, setSelectedMarker] = useState<MarkerData | null>(null);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: ['places']
+  });
 
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setViewState({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            zoom: 14
+          setCenter({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
           });
         },
-        (error) => {
-          console.error('Geolocation error:', error.message);
-          // Keep the default location set in the initial state
-        }
+        (error) => console.error('Geolocation error:', error.message)
       );
     } else {
       console.error("Error: Your browser doesn't support geolocation.");
-      // Keep the default location set in the initial state
     }
   }, []);
 
-  const categories = [
+  const categories: Category[] = [
     { name: 'Restaurants', icon: Utensils },
     { name: 'Hospitals', icon: Stethoscope },
     { name: 'Shopping', icon: ShoppingBag },
@@ -93,21 +67,51 @@ const Explore = () => {
     { name: 'Landmarks', icon: MapPin }
   ];
 
-  const fetchCategoryData = async (category: string) => {
-    try {
-      const response = await axios.get(`https://dummyjson.com/products/category/${category}`);
-      const data = response.data;
-      
-      setProducts(data.products);
-      setShowDataModal(true);
-    } catch (error) {
-      console.error('Error fetching category data:', error);
-    }
+  const fetchCategoryData = (category: string) => {
+    if (!map) return;
+
+    const service = new google.maps.places.PlacesService(map);
+    const request = {
+      location: center,
+      radius: 5000,
+      type: getCategoryType(category)
+    };
+
+    service.nearbySearch(request, (results, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+        const newMarkers: MarkerData[] = results.map((place) => ({
+          id: place.place_id as string,
+          lat: place.geometry?.location?.lat() || 0,
+          lng: place.geometry?.location?.lng() || 0,
+          name: place.name,
+          description: place.vicinity
+        }));
+        setMarkers(newMarkers);
+      } else {
+        console.error('Error fetching places:', status);
+      }
+    });
+  };
+
+  const getCategoryType = (category: string): string => {
+    const categoryMap: { [key: string]: string } = {
+      'Restaurants': 'restaurant',
+      'Hospitals': 'hospital',
+      'Shopping': 'shopping_mall',
+      'Cafes': 'cafe',
+      'Schools': 'school',
+      'Gas Stations': 'gas_station',
+      'Banks': 'bank',
+      'Hotels': 'lodging',
+      'Car Rentals': 'car_rental',
+      'Landmarks': 'tourist_attraction'
+    };
+    return categoryMap[category] || 'point_of_interest';
   };
 
   const handleCategoryClick = (category: Category) => {
     setSelectedCategory(category);
-    fetchCategoryData(category.name.toLowerCase());
+    fetchCategoryData(category.name);
     setShowFilterModal(false);
   };
 
@@ -115,15 +119,13 @@ const Explore = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setViewState({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            zoom: 14
+          setCenter({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
           });
+          setZoom(14);
         },
-        (error) => {
-          console.error('Geolocation error:', error.message);
-        }
+        (error) => console.error('Geolocation error:', error.message)
       );
     } else {
       console.error("Error: Your browser doesn't support geolocation.");
@@ -132,41 +134,36 @@ const Explore = () => {
 
   return (
     <div className="relative h-screen">
-      <Map
-        {...viewState}
-        onMove={(evt) => setViewState(evt.viewState)}
-        mapboxAccessToken={MAPBOX_TOKEN}
-        mapStyle="mapbox://styles/mapbox/streets-v11"
-        style={{ width: '100%', height: '100%' }}
-      >
-        <Marker longitude={viewState.longitude} latitude={viewState.latitude} anchor="bottom">
-          <MapPin size={32} color="#FF6600" />
-        </Marker>
-
-        {markers.map((marker) => (
-          <Marker key={marker.id} latitude={marker.lat} longitude={marker.lng}>
-            <MapPin
-              size={32}
-              color="#FF6600"
+      {isLoaded ? (
+        <GoogleMap
+          mapContainerStyle={{ width: '100%', height: '100%' }}
+          center={center}
+          zoom={zoom}
+          onLoad={map => setMap(map)}
+        >
+          {markers.map((marker) => (
+            <Marker
+              key={marker.id}
+              position={{ lat: marker.lat, lng: marker.lng }}
               onClick={() => setSelectedMarker(marker)}
             />
-          </Marker>
-        ))}
+          ))}
 
-        {selectedMarker && (
-          <Popup
-            latitude={selectedMarker.lat}
-            longitude={selectedMarker.lng}
-            onClose={() => setSelectedMarker(null)}
-            closeOnClick={true}
-          >
-            <div>
-              <h4>{selectedMarker.name}</h4>
-              <p>{selectedMarker.description}</p>
-            </div>
-          </Popup>
-        )}
-      </Map>
+          {selectedMarker && (
+            <InfoWindow
+              position={{ lat: selectedMarker.lat, lng: selectedMarker.lng }}
+              onCloseClick={() => setSelectedMarker(null)}
+            >
+              <div>
+                <h4>{selectedMarker.name}</h4>
+                <p>{selectedMarker.description}</p>
+              </div>
+            </InfoWindow>
+          )}
+        </GoogleMap>
+      ) : (
+        <LoadingScreen />
+      )}
 
       <div className="fixed bottom-20 right-4 flex flex-col space-y-2 z-10">
         <button
@@ -200,29 +197,6 @@ const Explore = () => {
                   <category.icon size={20} className="mr-2 text-orange-500" />
                   <span>{category.name}</span>
                 </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showDataModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-30">
-          <div className="bg-white rounded-lg shadow-lg w-11/12 max-w-lg">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="text-xl font-semibold">Available {selectedCategory?.name}</h2>
-              <button onClick={() => setShowDataModal(false)}>
-                <X size={24} />
-              </button>
-            </div>
-            <div className="p-4 max-h-96 overflow-y-auto">
-              {products.map((product) => (
-                <div key={product.id} className="mb-4 p-2 border-b">
-                  <h3 className="text-lg font-semibold">{product.title}</h3>
-                  <p className="text-sm text-gray-600">{product.description}</p>
-                  <p className="text-sm font-semibold mt-1">Price: ${product.price}</p>
-                  <p className="text-sm text-gray-500">Rating: {product.rating}/5</p>
-                </div>
               ))}
             </div>
           </div>

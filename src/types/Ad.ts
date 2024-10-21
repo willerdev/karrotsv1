@@ -16,4 +16,22 @@ export interface Ad {
   views: number;
   savedBy: string[];
   isVip?: boolean;
+  brand: string;
+  model: string;
+  internalStorage: number;
+  ram: number;
+  secondCondition: string;
+  color: string;
+  network: string;
+  sim: string;
+  wifi: boolean;
+  bluetooth: boolean;
+  gps: boolean;
+  battery: number;
+  charger: boolean;
+  headphones: boolean;
+  box: boolean;
+  accessories: string[];
+  notes: string;
+  
 }

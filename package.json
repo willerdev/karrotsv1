@@ -12,6 +12,7 @@
   "dependencies": {
     "@headlessui/react": "^1.7.18",
     "@prisma/client": "^5.21.1",
+    "@react-google-maps/api": "^2.20.3",
     "@types/express": "^5.0.0",
     "@types/next": "^8.0.7",
     "axios": "^1.7.7",
