@@ -40,7 +40,7 @@ import ChatPage from './pages/ChatPage';
 import DeliveryServices from './pages/DeliveryServices';
 import Subscription from './pages/subscription';
 import Payment from './pages/Payment';
-
+import MyAds from './pages/MyAds';
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
 
@@ -77,6 +77,7 @@ function App() {
               <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/category/:categoryName" element={<CategoryPage />} />
               <Route path="/about" element={<About />} />
+              <Route path="/myads" element={<ProtectedRoute><MyAds /></ProtectedRoute>} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/press" element={<Press />} />
               <Route path="/help" element={<Help />} />

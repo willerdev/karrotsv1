@@ -61,6 +61,29 @@ export const getAds = async (page: number = 1): Promise<Ad[]> => {
     throw error;
   }
 };
+export const getuserAds = async (userId: string): Promise<Ad[]> => {
+  try {
+    const adsRef = collection(db, "ads");
+    const q = query(
+      adsRef,
+      where('userId', '==', userId),
+      orderBy("createdAt", "desc")
+      
+    );
+    const querySnapshot = await getDocs(q);
+
+    const ads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
+
+    // Update cache
+    localStorage.setItem(ADS_CACHE_KEY, JSON.stringify(ads));
+    localStorage.setItem('ads_cache_timestamp', Date.now().toString());
+
+    return ads;
+  } catch (error) {
+    console.error("Error fetching ads:", error);
+    throw error;
+  }
+};
 
 export const getUserAds = async (userId: string): Promise<Ad[]> => {
   try {
@@ -191,6 +214,37 @@ export const sendAdConfirmationEmail = async (email: string, ad: Ad, title: stri
     return await response.json();
   } catch (error) {
     console.error('Error sending confirmation email:', error);
+    throw error;
+  }
+};
+
+export const updateAdStatus = async (adId: string, newStatus: 'active' | 'sold' | 'unavailable') => {
+  try {
+    const adRef = doc(db, "ads", adId);
+    await updateDoc(adRef, {
+      status: newStatus,
+      updatedAt: new Date()
+    });
+    console.log(`Ad status updated to ${newStatus}`);
+  } catch (error) {
+    console.error("Error updating ad status:", error);
+    throw error;
+  }
+};
+
+export const getAdsByUserId = async (userId: string): Promise<Ad[]> => {
+  try {
+    const adsRef = collection(db, "ads");
+    const q = query(
+      adsRef,
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc")
+    );
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
+  } catch (error) {
+    console.error("Error fetching ads by user ID:", error);
     throw error;
   }
 };

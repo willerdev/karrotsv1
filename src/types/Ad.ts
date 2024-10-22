@@ -18,8 +18,9 @@ export interface Ad {
   isVip?: boolean;
   brand: string;
   model: string;
-  internalStorage: number;
-  ram: number;
+  internalStorage: number | null;
+  ram: number | null;
+  screenSize: number | null;
   secondCondition: string;
   color: string;
   network: string;
@@ -33,5 +34,15 @@ export interface Ad {
   box: boolean;
   accessories: string[];
   notes: string;
-  
+  batteryCapacity: number | null;
+  operatingSystem: string;
+  cameraResolution: string;
+  processorType: string;
+  storageType: string;
+  graphicsCard: string;
+  warrantyInformation: string;
+  dimensions: string;
+  weight: string;
+  material: string | null;
+  energyEfficiencyRating: number | null;
 }

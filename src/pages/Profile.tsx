@@ -122,7 +122,20 @@ const Profile = () => {
             </div>
           )}
         </div>
-
+<div className="mb-6">
+<div className="flex justify-between items-center mb-2">
+            <h2 className="text-lg font-semibold">Settings</h2>
+            <Link to="/subscription" className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors duration-300">
+              Subscription
+            </Link>
+          </div>
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-lg font-semibold">My Posted Ads</h2>
+            <Link to="/myads" className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors duration-300">
+              View My ads
+            </Link>
+          </div>
+</div>
         {/* Recently Viewed Section */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-2">Recently viewed</h2>
@@ -177,12 +190,7 @@ const Profile = () => {
 
         {/* Settings */}
         <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-semibold">Settings</h2>
-            <Link to="/subscription" className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors duration-300">
-              Subscription
-            </Link>
-          </div>
+     
           <ul className="space-y-2">
             <li className="flex items-center justify-between">
               <span>Edit Profile</span>

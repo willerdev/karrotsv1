@@ -410,7 +410,7 @@ const Explore: React.FC = () => {
       )}
 
       {/* Tilt and Rotation Controls */}
-      <div className="fixed top-1/2 left-4 transform -translate-y-1/2 flex flex-col space-y-2 z-10">
+      <div className="fixed top-1/2 left-4 transform -translate-y-1/2 flex flex-col space-y-2 z-10 hidden">
         <button
           className="bg-blue-500 text-white p-3 rounded-full shadow-lg"
           onClick={() => adjustMap('rotate', 20)}
@@ -425,7 +425,7 @@ const Explore: React.FC = () => {
         </button>
       </div>
 
-      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+      <div className="fixed hidden top-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
         <button
           className="bg-blue-500 text-white p-3 rounded-full shadow-lg"
           onClick={() => adjustMap('tilt', -20)}
@@ -440,7 +440,7 @@ const Explore: React.FC = () => {
         </button>
       </div>
 
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-10 hidden">
+      <div className="fixed hidden bottom-4 left-1/2 transform -translate-x-1/2 z-10 hidden">
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2"
           onClick={() => {
