@@ -89,8 +89,13 @@ const PostAd: React.FC = () => {
         model: '',
         internalStorage: null,
         ram: null,
-        screenSize: null
-
+        screenSize: null,
+        secondCondition: "",
+        network: '',
+        sim: '',
+        wifi: false,
+        // Add other missing properties with default values (null or empty string)
+        // ...
       };
 
       const postedAd = await postAd(adData);
