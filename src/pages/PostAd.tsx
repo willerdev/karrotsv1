@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { postAd, sendAdConfirmationEmail } from '../services/adService';
+import { postAd } from '../services/adService';
 import ImageUpload from '../components/ImageUpload';
 import { AlertCircle, X, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,7 +8,8 @@ import { storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { categories } from '../data/categories';
-import { Ad } from '../types/Ad'; // Add this import
+import { Ad } from '../types/Ad';
+
 import Loading from '../components/LoadingScreen';
 import { motion } from 'framer-motion';
 
@@ -72,7 +73,7 @@ const PostAd: React.FC = () => {
     try {
       const uploadedImageUrls = await uploadImages();
 
-      const adData = {
+      const adData: Omit<Ad, "id" | "status" | "createdAt" | "updatedAt" | "views" | "savedBy"> = {
         title,
         description,
         price: Number(price),
@@ -82,36 +83,17 @@ const PostAd: React.FC = () => {
         negotiable,
         images: uploadedImageUrls,
         location,
-        userId: user.uid
+        userId: user.uid,
+        color: '',
+        brand: '',
+        model: '',
+        internalStorage: null,
+        ram: null,
+        screenSize: null
+
       };
 
       const postedAd = await postAd(adData);
-
-      // Send confirmation email
-      if (user.email) {
-        try {
-          const partialAdData: Omit<Ad, 'id'> = {
-            title,
-            description,
-            price: Number(price),
-            category,
-            subcategory: subcategory || null,
-            condition: condition as Ad['condition'],
-            negotiable,
-            images: uploadedImageUrls,
-            location,
-            userId: user.uid,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            status: 'active',
-            views: 0,
-            savedBy: []
-          };
-          await sendAdConfirmationEmail(user.email, partialAdData as Ad, title);
-        } catch (emailError) {
-          console.error("Error sending confirmation email:", emailError);
-        }
-      }
 
       navigate('/locals');
     } catch (err: any) {
