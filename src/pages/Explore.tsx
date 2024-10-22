@@ -3,7 +3,8 @@ import LoadingScreen from '../components/LoadingScreen';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow, DirectionsRenderer } from '@react-google-maps/api';
 import {
   MapPin, Coffee, Stethoscope, ShoppingBag, Utensils, School,
-  Fuel, Building2, Hotel, Car, ChevronUp, Filter, Crosshair
+  Fuel, Building2, Hotel, Car, ChevronUp, Filter, Crosshair,
+  Rotate3D, RotateCcw, RotateCw, ChevronDown, X
 } from 'lucide-react';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCIRjn9GL-E-eKxxsrgq2jiT0ux0tRNFjM';
@@ -34,6 +35,8 @@ const Explore: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [recentPlaces, setRecentPlaces] = useState<MarkerData[]>([]); // Store recent places
   const [showPlaceModal, setShowPlaceModal] = useState(false); // Modal for listing places
+  const [tilt, setTilt] = useState(0);
+  const [heading, setHeading] = useState(0);
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -177,6 +180,23 @@ const Explore: React.FC = () => {
     );
   };
 
+  const adjustMap = (mode: 'tilt' | 'rotate', amount: number) => {
+    if (!map) return;
+
+    switch (mode) {
+      case 'tilt':
+        const newTilt = Math.max(0, Math.min(map.getTilt() + amount, 60));
+        map.setTilt(newTilt);
+        setTilt(newTilt);
+        break;
+      case 'rotate':
+        const newHeading = (map.getHeading() + amount + 360) % 360;
+        map.setHeading(newHeading);
+        setHeading(newHeading);
+        break;
+    }
+  };
+
   return (
     <div className="relative h-screen">
       {isLoaded ? (
@@ -184,6 +204,8 @@ const Explore: React.FC = () => {
           mapContainerStyle={{ width: '100%', height: '100%' }}
           center={center}
           zoom={zoom}
+          tilt={tilt}
+          heading={heading}
           onLoad={map => setMap(map)}
         >
           {/* Origin Marker (Point A) */}
@@ -355,26 +377,28 @@ const Explore: React.FC = () => {
 
       {recentPlaces.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-lg z-20">
-          <h3 className="text-lg font-semibold mb-2">Recently Visited Places</h3>
-          <div className="space-y-2">
+          <h3 className="text-xl font-semibold mb-4 text-orange-600">Recently Visited Places</h3>
+          <div className="space-y-3 max-h-60 overflow-y-auto">
             {recentPlaces.map((place) => (
-              <div key={place.id} className="flex items-center justify-between border p-2 rounded-lg">
-                <div>
-                  <h4 className="font-semibold">{place.name}</h4>
-                  <p className="text-sm text-gray-600">{place.description}</p>
+              <div key={place.id} className="flex items-center justify-between bg-orange-50 p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div className="flex-grow mr-4">
+                  <h4 className="font-semibold text-gray-800">{place.name}</h4>
+                  <p className="text-sm text-gray-600 line-clamp-1">{place.description}</p>
                 </div>
                 <div className="flex space-x-2">
                   <button
-                    className="bg-blue-500 text-white p-2 rounded-lg"
+                    className="bg-orange-500 text-white p-2 rounded-full hover:bg-orange-600 transition-colors duration-200"
                     onClick={() => getDirections(place.lat, place.lng)}
+                    aria-label="Get Directions"
                   >
-                    Get Directions
+                    <MapPin size={20} />
                   </button>
                   <button
-                    className="bg-red-500 text-white p-2 rounded-lg"
+                    className="bg-white text-orange-500 p-2 rounded-full border border-orange-500 hover:bg-orange-100 transition-colors duration-200"
                     onClick={() => handleRemoveRecentPlace(place.id)}
+                    aria-label="Remove"
                   >
-                    Remove
+                    <X size={20} />
                   </button>
                 </div>
               </div>
@@ -382,6 +406,54 @@ const Explore: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Tilt and Rotation Controls */}
+      <div className="fixed top-1/2 left-4 transform -translate-y-1/2 flex flex-col space-y-2 z-10">
+        <button
+          className="bg-blue-500 text-white p-3 rounded-full shadow-lg"
+          onClick={() => adjustMap('rotate', 20)}
+        >
+          <RotateCcw size={24} />
+        </button>
+        <button
+          className="bg-blue-500 text-white p-3 rounded-full shadow-lg"
+          onClick={() => adjustMap('rotate', -20)}
+        >
+          <RotateCw size={24} />
+        </button>
+      </div>
+
+      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+        <button
+          className="bg-blue-500 text-white p-3 rounded-full shadow-lg"
+          onClick={() => adjustMap('tilt', -20)}
+        >
+          <ChevronUp size={24} />
+        </button>
+        <button
+          className="bg-blue-500 text-white p-3 rounded-full shadow-lg"
+          onClick={() => adjustMap('tilt', 20)}
+        >
+          <ChevronDown size={24} />
+        </button>
+      </div>
+
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-10">
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2"
+          onClick={() => {
+            setTilt(0);
+            setHeading(0);
+            if (map) {
+              map.setTilt(0);
+              map.setHeading(0);
+            }
+          }}
+        >
+          <Rotate3D size={20} />
+          <span>Reset View</span>
+        </button>
+      </div>
     </div>
   );
 };
