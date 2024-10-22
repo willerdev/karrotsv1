@@ -68,11 +68,7 @@ const Profile = () => {
     }
   };
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    // Implement dark mode logic here
-  };
-
+ 
   const handleEditClick = (field: string) => {
     setEditField(field);
     setShowEditModal(true);
@@ -91,8 +87,8 @@ const Profile = () => {
   return (
     <div className="bg-white text-orange-600 min-h-screen relative pb-20">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-32 h-32 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+        <div className="flex items-center mb-2">
+          <div className="w-32 h-32 bg-orange-100 rounded-full flex-shrink-0 mr-6">
             {userData.profilePictureUrl ? (
               <img src={userData.profilePictureUrl} alt="Profile" className="w-full h-full object-cover rounded-full" />
             ) : (
@@ -103,12 +99,14 @@ const Profile = () => {
               />
             )}
           </div>
-          <h1 className="text-2xl font-bold">{userData.name}</h1>
-          <p className="text-gray-500">{userData.email}</p>
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold">{userData.name}</h1>
+            <p className="text-gray-500">{userData.email}</p>
+          </div>
         </div>
 
         {/* O Pay Section */}
-        <div className="mb-8">
+        <div className="mb-2">
           {!imageError ? (
             <img 
               src="https://i0.wp.com/blog.karrotmarket.com/wp-content/uploads/2024/08/the-ethical-side-of-secondhand-shopping-how-honesty-and-community-can-transform-your-experience.webp?fit=1792%2C1024&ssl=1" 
