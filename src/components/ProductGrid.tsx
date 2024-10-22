@@ -101,6 +101,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
     });
   }, [ads]);
 
+ 
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {ads.slice(0, 20).map((ad) => (
@@ -126,11 +128,13 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
           <div className="p-2 flex-grow flex flex-col justify-between">
             <div>
               <h3 className="font-semibold text-xs mb-1 truncate">{ad.title}</h3>
-              <p className="text-orange-500 font-bold text-sm">{ad.price.toLocaleString()} Frw</p>
+              <p className="text-orange-500 font-bold text-sm">{ad.price.toLocaleString()} Frw </p>
             </div>
             <div>
               <p className="bg-gray-100 text-gray-700 text-xs p-1 rounded-md mb-1 flex items-center">
-                <MapPin size={12} className="mr-1" /> <span className="font-semibold mr-2">{ad.location}</span>
+                <MapPin size={12} className="mr-1" /> 
+                <span className="font-semibold mr-2">{ad.location}</span>
+                
                 <Tag size={12} className="mr-1" /> <span className="text-gray-600">{ad.condition}</span>
               </p>
               <p className="text-orange-500 text-xs truncate flex items-center">

@@ -185,13 +185,15 @@ const Explore: React.FC = () => {
 
     switch (mode) {
       case 'tilt':
-        const newTilt = Math.max(0, Math.min(map.getTilt() + amount, 60));
-        map.setTilt(newTilt);
-        setTilt(newTilt);
+        if (map) {
+          const newTilt = Math.max(0, Math.min(map.getTilt?.() ?? 0 + amount, 60));
+          map.setTilt(newTilt);
+          setTilt(newTilt);
+        }
         break;
       case 'rotate':
-        const newHeading = (map.getHeading() + amount + 360) % 360;
-        map.setHeading(newHeading);
+        const newHeading = ((map?.getHeading() ?? 0) + amount + 360) % 360;
+        map?.setHeading(newHeading);
         setHeading(newHeading);
         break;
     }
@@ -438,7 +440,7 @@ const Explore: React.FC = () => {
         </button>
       </div>
 
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-10">
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-10 hidden">
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2"
           onClick={() => {

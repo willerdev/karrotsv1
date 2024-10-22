@@ -38,6 +38,8 @@ import WhatsNew from './pages/WhatsNew';
 import SearchPage from './pages/SearchPage';
 import ChatPage from './pages/ChatPage';
 import DeliveryServices from './pages/DeliveryServices';
+import Subscription from './pages/subscription';
+import Payment from './pages/Payment';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -67,7 +69,7 @@ function App() {
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/post-ad" element={<ProtectedRoute><PostAd /></ProtectedRoute>} />
               <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/edit-profile/:section" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><SavedAds /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
@@ -95,6 +97,8 @@ function App() {
               <Route path="/savings" element={<ProtectedRoute><Savings /></ProtectedRoute>} />
               <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
               <Route path="/whats-new" element={<WhatsNew />} />
+              <Route path="/subscription" element={<Subscription />} />
+              <Route path="/payment/:userPlanId" element={<Payment />} />
             </Routes>
           </main>
           <Footer />

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin } from 'lucide-react';
+import { Search, MapPin, CreditCard, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import getCurrencyForCountry from './CurrencyLocator';
+import { toast, Toaster } from 'react-hot-toast';
 
 const SearchBar = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [location, setLocation] = useState('All Uganda');
+  const [currencyCode, setCurrencyCode] = useState('');
   const navigate = useNavigate();
   const suggestions = [
     'iPhone',
@@ -14,7 +17,12 @@ const SearchBar = () => {
     'wigs',
     'Bicycles'
   ];
-
+  const handleLocationInfo = (e: React.MouseEvent, location: string) => {
+    e.preventDefault();
+    if (location.toLowerCase() !== 'uganda') {
+      toast('Only EAC countries are supported Currency will not be convereted');
+    }
+  };
   const handleSearch = (term: string) => {
     navigate(`/search?q=${encodeURIComponent(term)}`);
   };
@@ -30,7 +38,10 @@ const SearchBar = () => {
     fetch('https://api.ipdata.co?api-key=235c3d2efdfdbada73b3dd981eec577656a166edbd983fe8c5e72996')
       .then(response => response.json())
       .then(data => {
-        setLocation(data.country_name || 'All Africa');
+        const countryName = data.country_name || 'All Africa';
+        setLocation(countryName);
+        const currency = getCurrencyForCountry(countryName);
+        setCurrencyCode(currency?.toString() || '');
       })
       .catch(error => {
         console.error('Error fetching location:', error);
@@ -39,12 +50,27 @@ const SearchBar = () => {
 
   return (
     <div className="bg-orange-500 text-white py-6">
+      <Toaster />
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-semibold">Find anything in</h2>
-          <div className="flex items-center space-x-2">
-            <MapPin size={20} />
-            <span className="text-lg">{location}</span>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <MapPin size={20} />
+              <span className="text-lg">{location} {location.toLowerCase() !== 'uganda' && (
+                  <span className="text-sm"> Not Supported <button onClick={(e) => handleLocationInfo(e, location)}>
+                    <HelpCircle size={15} className="text-white-500" />
+                  </button>
+                </span>
+                )}
+              </span>
+            </div>
+            {currencyCode && (
+              <div className="flex items-center space-x-2">
+                <CreditCard size={20} />
+                <span className="text-lg">{currencyCode}</span>
+              </div>
+            )}
           </div>
         </div>
         <form onSubmit={handleSubmit} className="relative w-full mx-auto">

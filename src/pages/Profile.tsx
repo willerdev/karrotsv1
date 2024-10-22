@@ -177,7 +177,12 @@ const Profile = () => {
 
         {/* Settings */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">Settings</h2>
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-lg font-semibold">Settings</h2>
+            <Link to="/subscription" className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors duration-300">
+              Subscription
+            </Link>
+          </div>
           <ul className="space-y-2">
             <li className="flex items-center justify-between">
               <span>Edit Profile</span>
