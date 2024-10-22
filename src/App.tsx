@@ -38,7 +38,7 @@ import WhatsNew from './pages/WhatsNew';
 import SearchPage from './pages/SearchPage';
 import ChatPage from './pages/ChatPage';
 import DeliveryServices from './pages/DeliveryServices';
-import Subscription from './pages/subscription';
+
 import Payment from './pages/Payment';
 import MyAds from './pages/MyAds';
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -98,7 +98,7 @@ function App() {
               <Route path="/savings" element={<ProtectedRoute><Savings /></ProtectedRoute>} />
               <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
               <Route path="/whats-new" element={<WhatsNew />} />
-              <Route path="/subscription" element={<Subscription />} />
+         
               <Route path="/payment/:userPlanId" element={<Payment />} />
             </Routes>
           </main>
