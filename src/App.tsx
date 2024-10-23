@@ -40,7 +40,7 @@ import ChatPage from './pages/ChatPage';
 import DeliveryServices from './pages/DeliveryServices';
 import Payment from './pages/Payment';
 import MyAds from './pages/MyAds';
-import Subscription from './pages/subscription';
+import Subscription from './pages/Subscription';
 import LoadingScreen from './components/LoadingScreen';
 import ShopSettings from './pages/ShopSettings'; // Add this import
 import KarrotPage from './pages/KarrotPage';
