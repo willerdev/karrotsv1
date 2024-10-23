@@ -174,7 +174,7 @@ const PostAd: React.FC = () => {
           />
         </div>
         <div>
-          <label htmlFor="price" className="block mb-2 font-semibold text-gray-700">Price (USh)</label>
+          <label htmlFor="price" className="block mb-2 font-semibold text-gray-700">Price (Frw)</label>
           <input
             type="number"
             id="price"
