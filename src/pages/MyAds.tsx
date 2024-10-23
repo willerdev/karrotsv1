@@ -5,6 +5,7 @@ import LoadingScreen from '../components/LoadingScreen';
 import { Eye, EyeOff, Check, Search } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase'; // Add this import
 
 
 const MyAds: React.FC = () => {

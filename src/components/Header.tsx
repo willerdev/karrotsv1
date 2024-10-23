@@ -36,7 +36,7 @@ const Header = () => {
         <nav className="flex items-center space-x-2 md:space-x-3">
           <IconButton icon={Bell} onClick={() => handleAuthAction('/notifications')} />
           <IconButton icon={MessageSquare} onClick={() => handleAuthAction('/chat')} />
-          <IconButton icon={Wallet} onClick={() => handleAuthAction('/wallet')} />
+          {/* <IconButton icon={Wallet} onClick={() => handleAuthAction('/wallet')} /> */}
           
           {user ? (
             <Link to="/profile" className="bg-white rounded-full p-1.5 text-orange-500 hover:bg-orange-100 transition-colors">

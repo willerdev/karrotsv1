@@ -39,19 +39,21 @@ export const postAd = async (adData: Omit<Ad, 'id' | 'createdAt' | 'updatedAt' |
   }
 };
 
-export const getAds = async (page: number = 1): Promise<Ad[]> => {
+export const getAds = async (page: number = 1, pageSize: number = 120): Promise<Ad[]> => {
   try {
     const adsRef = collection(db, "ads");
     const q = query(
       adsRef,
       orderBy("createdAt", "desc"),
-      limit(ITEMS_PER_PAGE * page)
+      limit(pageSize),
+      startAfter((page - 1) * pageSize)
     );
+    
     const querySnapshot = await getDocs(q);
 
     const ads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
 
-    // Update cache
+    // Update cache (you might want to modify this for pagination)
     localStorage.setItem(ADS_CACHE_KEY, JSON.stringify(ads));
     localStorage.setItem('ads_cache_timestamp', Date.now().toString());
 
