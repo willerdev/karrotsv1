@@ -257,7 +257,7 @@ const Profile = () => {
 
         {/* Add this floating button for adding a product */}
         <Link
-          to="/add-product"
+          to="/postad"
           className="fixed bottom-20 left-8 bg-orange-500 text-white p-3 rounded-full shadow-lg hover:bg-orange-600 transition-colors duration-300"
           aria-label="Add Product"
         >
