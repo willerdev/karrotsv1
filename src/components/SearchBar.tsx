@@ -58,10 +58,11 @@ const SearchBar = () => {
             <div className="flex items-center space-x-2">
               <MapPin size={20} />
               <span className="text-lg">{location} {location.toLowerCase() !== 'rwanda' && (
-                  <span className="text-sm"> Not Supported <button onClick={(e) => handleLocationInfo(e, location)}>
+                  <button onClick={(e) => handleLocationInfo(e, location)}>
                     <HelpCircle size={15} className="text-white-500" />
+
                   </button>
-                </span>
+            
                 )}
               </span>
             </div>
