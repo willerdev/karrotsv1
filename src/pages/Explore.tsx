@@ -35,8 +35,9 @@ const Explore: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [recentPlaces, setRecentPlaces] = useState<MarkerData[]>([]); // Store recent places
   const [showPlaceModal, setShowPlaceModal] = useState(false); // Modal for listing places
-  const [tilt, setTilt] = useState(0);
+  const [tilt, setTilt] = useState(45); // Change initial tilt to 45
   const [heading, setHeading] = useState(0);
+  const [mapTypeId, setMapTypeId] = useState<google.maps.MapTypeId>(google.maps.MapTypeId.TERRAIN);
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -152,8 +153,9 @@ const Explore: React.FC = () => {
     setSelectedMarker(marker);
     setRecentPlaces([...recentPlaces, marker]);
     setMarkers([]); // Hide other markers
-    setZoom(16);
+    setZoom(8);
     setShowPlaceModal(false);
+    setMapTypeId('terrain');
   };
 
   const handleRemoveRecentPlace = (id: string) => {
@@ -188,6 +190,7 @@ const Explore: React.FC = () => {
         if (map) {
           const newTilt = Math.max(0, Math.min(map.getTilt?.() ?? 0 + amount, 60));
           map.setTilt(newTilt);
+          
           setTilt(newTilt);
         }
         break;
@@ -206,15 +209,21 @@ const Explore: React.FC = () => {
           mapContainerStyle={{ width: '100%', height: '100%' }}
           center={center}
           zoom={zoom}
-          tilt={tilt}
+          tilt={tilt} // This will set the initial tilt to 45 degrees
           heading={heading}
-          onLoad={map => setMap(map)}
+          onLoad={map => {
+            setMap(map);
+            if (map) {
+              map.setTilt(45); // Ensure the tilt is set when the map loads
+            }
+          }}
+          mapTypeId={mapTypeId}
         >
           {/* Origin Marker (Point A) */}
           <Marker
             position={center}
             icon={{
-              url: "https://i.imgur.com/fCkF5bB.png",
+              url: "https://icon-library.com/images/google-map-pin-icon-png/google-map-pin-icon-png-5.jpg",
               scaledSize: new google.maps.Size(40, 40),
               labelOrigin: new google.maps.Point(20, -10)
             }}
@@ -231,7 +240,7 @@ const Explore: React.FC = () => {
             <Marker
               position={{ lat: selectedMarker.lat, lng: selectedMarker.lng }}
               icon={{
-                url: "https://i.imgur.com/fCkF5bB.png",
+                url: "https://seeklogo.com/images/M/map-pin-logo-724AC2A023-seeklogo.com.png",
                 scaledSize: new google.maps.Size(40, 40),
                 labelOrigin: new google.maps.Point(20, -10)
               }}
