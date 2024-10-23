@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Camera, Moon, Sun, LogOut, Edit, Key, Phone, MapPin, Heart, List, ShoppingBag, PiggyBank, Gift, FileText, Store, Plus, HelpCircle } from 'lucide-react';
+import { Camera, Moon, Sun, LogOut, Edit, Key, Phone, MapPin, Heart, List, ShoppingBag, PiggyBank, Gift, FileText, Store, Plus, HelpCircle, DollarSign } from 'lucide-react';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { User } from '../types/User';
@@ -288,6 +288,15 @@ const Profile = () => {
           >
             See why you could be banned
           </button>
+        </div>
+
+        {/* Add this section before the Support section */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-2">Earn with Karrot</h2>
+          <Link to="/earn-with-karrot" className="flex items-center p-3 bg-orange-100 rounded-lg">
+            <DollarSign className="mr-2" />
+            <span>Referral Program</span>
+          </Link>
         </div>
 
       </div>

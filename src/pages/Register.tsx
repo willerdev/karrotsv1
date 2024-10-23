@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, User, Mail, Lock, UserPlus } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -10,13 +11,34 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const { register, saveReferral } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [referrerId, setReferrerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const ref = searchParams.get('ref');
+    if (ref) {
+      try {
+        const decryptedId = atob(ref);
+        setReferrerId(decryptedId);
+      } catch (error) {
+        console.error('Invalid referral code');
+      }
+    }
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    if (!register) {
+      setError('Authentication service is not available. Please try again later.');
+      setLoading(false);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -25,7 +47,10 @@ const Register = () => {
     }
 
     try {
-      await register(name, email, password);
+      const result = await register(name, email, password);
+      if (typeof result === 'string' && referrerId) {
+        await saveReferral(result, referrerId);
+      }
       navigate('/locals');
     } catch (err: any) {
       setError(err.message || 'Failed to create an account. Please try again.');
@@ -35,75 +60,115 @@ const Register = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Register</h2>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg"
+    >
+      <motion.h2
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="text-3xl font-bold mb-6 text-center text-orange-500"
+      >
+        Register
+      </motion.h2>
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+          role="alert"
+        >
           <div className="flex items-center">
             <AlertCircle className="mr-2" />
             <span>{error}</span>
           </div>
-        </div>
+        </motion.div>
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="name" className="block mb-1">Name</label>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <label htmlFor="name" className="block mb-1 font-medium">
+            <User className="inline mr-2" size={18} />
+            Name
+          </label>
           <input
             type="text"
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-300 focus:border-orange-500 transition"
             required
           />
-        </div>
-        <div>
-          <label htmlFor="email" className="block mb-1">Email</label>
+        </motion.div>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <label htmlFor="email" className="block mb-1 font-medium">
+            <Mail className="inline mr-2" size={18} />
+            Email
+          </label>
           <input
             type="email"
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-300 focus:border-orange-500 transition"
             required
           />
-        </div>
-        <div>
-          <label htmlFor="password" className="block mb-1">Password</label>
+        </motion.div>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <label htmlFor="password" className="block mb-1 font-medium">
+            <Lock className="inline mr-2" size={18} />
+            Password
+          </label>
           <input
             type="password"
             id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-300 focus:border-orange-500 transition"
             required
             minLength={6}
           />
-        </div>
-        <div>
-          <label htmlFor="confirmPassword" className="block mb-1">Confirm Password</label>
+        </motion.div>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <label htmlFor="confirmPassword" className="block mb-1 font-medium">
+            <Lock className="inline mr-2" size={18} />
+            Confirm Password
+          </label>
           <input
             type="password"
             id="confirmPassword"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-300 focus:border-orange-500 transition"
             required
             minLength={6}
           />
-        </div>
-        <button 
-          type="submit" 
-          className="w-full bg-orange-500 text-white p-2 rounded disabled:opacity-50"
+        </motion.div>
+        <motion.button
+          type="submit"
+          className="w-full bg-orange-500 text-white p-2 rounded disabled:opacity-50 flex items-center justify-center"
           disabled={loading}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
+          <UserPlus className="mr-2" size={18} />
           {loading ? 'Registering...' : 'Register'}
-        </button>
+        </motion.button>
       </form>
-      <p className="mt-4 text-center">
-        Already have an account? <Link to="/login" className="text-orange-500">Login</Link>
-      </p>
-    </div>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+        className="mt-6 text-center"
+      >
+        Already have an account?{' '}
+        <Link to="/login" className="text-orange-500 hover:underline">
+          Login
+        </Link>
+      </motion.p>
+    </motion.div>
   );
 };
 
