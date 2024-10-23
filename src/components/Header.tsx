@@ -1,11 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Carrot, Bell, MessageSquare, User, Wallet, Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const Header = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      const q = query(
+        collection(db, 'notifications'),
+        where('userId', '==', user.uid),
+        where('status', '==', 'unread')
+      );
+
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        setUnreadNotifications(querySnapshot.size);
+      });
+
+      return () => unsubscribe();
+    }
+  }, [user]);
 
   const handleAuthAction = (path: string) => {
     if (user) {
@@ -15,12 +34,17 @@ const Header = () => {
     }
   };
 
-  const IconButton = ({ icon: Icon, onClick }: { icon: React.ElementType; onClick: () => void }) => (
+  const IconButton = ({ icon: Icon, onClick, badge }: { icon: React.ElementType; onClick: () => void; badge?: number }) => (
     <button
       onClick={onClick}
-      className="bg-white rounded-full p-2 text-orange-500 hover:bg-orange-100 transition-colors"
+      className="bg-white rounded-full p-2 text-orange-500 hover:bg-orange-100 transition-colors relative"
     >
       <Icon size={20} />
+      {badge !== undefined && badge > 0 && (
+        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </button>
   );
 
@@ -34,7 +58,7 @@ const Header = () => {
           <span className="text-xl font-bold hidden md:inline">Karrots</span>
         </Link>
         <nav className="flex items-center space-x-2 md:space-x-3">
-          <IconButton icon={Bell} onClick={() => handleAuthAction('/notifications')} />
+          <IconButton icon={Bell} onClick={() => handleAuthAction('/notifications')} badge={unreadNotifications} />
           <IconButton icon={MessageSquare} onClick={() => handleAuthAction('/chat')} />
           {/* <IconButton icon={Wallet} onClick={() => handleAuthAction('/wallet')} /> */}
           

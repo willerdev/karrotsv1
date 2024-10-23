@@ -40,10 +40,11 @@ import ChatPage from './pages/ChatPage';
 import DeliveryServices from './pages/DeliveryServices';
 import Payment from './pages/Payment';
 import MyAds from './pages/MyAds';
-import Subscription from './pages/Subscription';
+import Subscription from './pages/subscription';
 import LoadingScreen from './components/LoadingScreen';
 import ShopSettings from './pages/ShopSettings'; // Add this import
 import KarrotPage from './pages/KarrotPage';
+import Support from './pages/Support';
 
 import NotFound from './pages/NotFound';
 
@@ -110,6 +111,7 @@ function App() {
               <Route path="/recently-viewed" element={<RecentlyViewed />} />
               <Route path="/shop-settings" element={<ShopSettings />} />
               <Route path="/shop/:shopId" element={<KarrotPage />} />
+              <Route path="/support" element={<Support />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

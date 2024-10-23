@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Camera, Moon, Sun, LogOut, Edit, Key, Phone, MapPin, Heart, List, ShoppingBag, PiggyBank, Gift, FileText, Store, Plus } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
+import { Camera, Moon, Sun, LogOut, Edit, Key, Phone, MapPin, Heart, List, ShoppingBag, PiggyBank, Gift, FileText, Store, Plus, HelpCircle } from 'lucide-react';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { User } from '../types/User';
 import Modal from '../components/Modal';
@@ -11,6 +11,12 @@ import LoadingScreen from '../components/LoadingScreen';
 // Add this type definition
 type RecentlyViewedItem = {
   link: string;
+  title: string;
+};
+
+// Add this type definition
+type BanReason = {
+  id: string;
   title: string;
 };
 
@@ -25,6 +31,8 @@ const Profile = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editField, setEditField] = useState('');
   const [imageError, setImageError] = useState(false);
+  const [showBanReasonModal, setShowBanReasonModal] = useState(false);
+  const [banReasons, setBanReasons] = useState<BanReason[]>([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -56,6 +64,23 @@ const Profile = () => {
     // Fetch recently viewed items from localStorage
     const recentItems = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
     setRecentlyViewedItems(recentItems);
+
+    // Fetch ban reasons
+    const fetchBanReasons = async () => {
+      try {
+        const reasonsCollection = collection(db, 'reasons');
+        const reasonsSnapshot = await getDocs(reasonsCollection);
+        const reasonsList = reasonsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          title: doc.data().title,
+        }));
+        setBanReasons(reasonsList);
+      } catch (error) {
+        console.error('Error fetching ban reasons:', error);
+      }
+    };
+
+    fetchBanReasons();
   }, [user]);
 
   const handleLogout = async () => {
@@ -246,6 +271,25 @@ const Profile = () => {
         >
           <LogOut size={24} />
         </button>
+
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-2">Support</h2>
+          <Link to="/support" className="flex items-center p-3 bg-orange-100 rounded-lg">
+            <HelpCircle className="mr-2" />
+            <span>Get Support</span>
+          </Link>
+        </div>
+
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-2">Account Status</h2>
+          <button
+            onClick={() => setShowBanReasonModal(true)}
+            className="text-red-500 underline"
+          >
+            See why you could be banned
+          </button>
+        </div>
+
       </div>
 
       <Modal
@@ -268,6 +312,22 @@ const Profile = () => {
           </button>
         </form>
       </Modal>
+
+      <Modal
+        isOpen={showBanReasonModal}
+        onClose={() => setShowBanReasonModal(false)}
+        title="Reasons for Banning"
+      >
+        <div className="space-y-2">
+          <p className="font-semibold">You can be banned for the following reasons:</p>
+          <ul className="list-disc pl-5">
+            {banReasons.map((reason) => (
+              <li key={reason.id}>{reason.title}</li>
+            ))}
+          </ul>
+        </div>
+      </Modal>
+
     </div>
   );
 };
