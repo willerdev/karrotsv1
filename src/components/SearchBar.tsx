@@ -19,8 +19,8 @@ const SearchBar = () => {
   ];
   const handleLocationInfo = (e: React.MouseEvent, location: string) => {
     e.preventDefault();
-    if (location.toLowerCase() !== 'uganda') {
-      toast('Only EAC countries are supported Currency will not be convereted');
+    if (location.toLowerCase() !== 'rwanda') {
+      toast('Only Rwanda is supportted for now , coming to all EAC Soon..');
     }
   };
   const handleSearch = (term: string) => {
@@ -57,7 +57,7 @@ const SearchBar = () => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <MapPin size={20} />
-              <span className="text-lg">{location} {location.toLowerCase() !== 'uganda' && (
+              <span className="text-lg">{location} {location.toLowerCase() !== 'rwanda' && (
                   <span className="text-sm"> Not Supported <button onClick={(e) => handleLocationInfo(e, location)}>
                     <HelpCircle size={15} className="text-white-500" />
                   </button>
