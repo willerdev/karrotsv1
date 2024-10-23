@@ -20,7 +20,7 @@ const SearchBar = () => {
   const handleLocationInfo = (e: React.MouseEvent, location: string) => {
     e.preventDefault();
     if (location.toLowerCase() !== 'rwanda') {
-      toast('Only Rwanda is supportted for now , coming to all EAC Soon..');
+      toast('Only Rwanda is supported for now , coming to all EAC Soon..');
     }
   };
   const handleSearch = (term: string) => {
