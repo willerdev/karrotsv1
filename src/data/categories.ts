@@ -24,7 +24,7 @@ export const categories = [
       subcategories: ['Skincare', 'Makeup', 'Hair Care', 'Fragrances', 'Health Products']
     },
     {
-      name: 'Fashion',
+      name: 'fashion',
       subcategories: ['Men\'s Clothing', 'Women\'s Clothing', 'Shoes', 'Accessories', 'Children\'s Fashion']
     },
     {

@@ -38,14 +38,15 @@ import WhatsNew from './pages/WhatsNew';
 import SearchPage from './pages/SearchPage';
 import ChatPage from './pages/ChatPage';
 import DeliveryServices from './pages/DeliveryServices';
-
 import Payment from './pages/Payment';
 import MyAds from './pages/MyAds';
+import Subscription from './pages/Subscription';
+import LoadingScreen from './components/LoadingScreen';
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingScreen />;
   }
 
   if (!user) {
@@ -69,7 +70,7 @@ function App() {
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/post-ad" element={<ProtectedRoute><PostAd /></ProtectedRoute>} />
               <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/edit-profile/:section" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><SavedAds /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
@@ -77,18 +78,20 @@ function App() {
               <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/category/:categoryName" element={<CategoryPage />} />
               <Route path="/about" element={<About />} />
-              <Route path="/myads" element={<ProtectedRoute><MyAds /></ProtectedRoute>} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/press" element={<Press />} />
+              <Route path="/payment/:userPlanId" element={<Payment />} />
               <Route path="/help" element={<Help />} />
               <Route path="/safety" element={<Safety />} />
               <Route path="/community" element={<Community />} />
               <Route path="/chat/:conversationId?" element={<ChatPage />} />
               <Route path="/cookies" element={<Cookies />} />
               <Route path="/privacy" element={<Privacy />} />
+              <Route path="/subscription" element={<Subscription />} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/locals" element={<Locals />} />
+              <Route path="/myads" element={<ProtectedRoute><MyAds /></ProtectedRoute>} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
               <Route path="/recently-viewed/:category" element={<ProtectedRoute><RecentlyViewed /></ProtectedRoute>} />
@@ -98,8 +101,7 @@ function App() {
               <Route path="/savings" element={<ProtectedRoute><Savings /></ProtectedRoute>} />
               <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
               <Route path="/whats-new" element={<WhatsNew />} />
-         
-              <Route path="/payment/:userPlanId" element={<Payment />} />
+             
             </Routes>
           </main>
           <Footer />
