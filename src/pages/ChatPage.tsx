@@ -51,13 +51,9 @@ const ChatPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-orange-100">
-     
-        <ChatList conversations={conversations} />
-  
-      
-        <ChatWindow currentUser={chatUser} />
-      
+    <div className="flex h-[calc(100vh-4rem)] bg-orange-100">
+      <ChatList conversations={conversations} />
+      <ChatWindow currentUser={chatUser} />
     </div>
   );
 };

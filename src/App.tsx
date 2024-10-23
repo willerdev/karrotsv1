@@ -42,6 +42,11 @@ import Payment from './pages/Payment';
 import MyAds from './pages/MyAds';
 import Subscription from './pages/Subscription';
 import LoadingScreen from './components/LoadingScreen';
+import ShopSettings from './pages/ShopSettings'; // Add this import
+import KarrotPage from './pages/KarrotPage';
+
+import NotFound from './pages/NotFound';
+
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
 
@@ -67,10 +72,11 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/post-ad" element={<ProtectedRoute><PostAd /></ProtectedRoute>} />
               <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/edit-profile/:section" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><SavedAds /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
@@ -101,7 +107,10 @@ function App() {
               <Route path="/savings" element={<ProtectedRoute><Savings /></ProtectedRoute>} />
               <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
               <Route path="/whats-new" element={<WhatsNew />} />
-             
+              <Route path="/recently-viewed" element={<RecentlyViewed />} />
+              <Route path="/shop-settings" element={<ShopSettings />} />
+              <Route path="/shop/:shopId" element={<KarrotPage />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
           <Footer />

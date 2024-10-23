@@ -5,7 +5,7 @@ import { User } from '../types/User';
 import { db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { FaImage, FaMapMarkerAlt, FaArrowLeft } from 'react-icons/fa';
+import { FaImage, FaMapMarkerAlt, FaArrowLeft, FaPaperPlane } from 'react-icons/fa';
 
 interface ChatWindowProps {
   currentUser: User;
@@ -107,6 +107,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser }) => {
     return <p>{content}</p>;
   };
 
+  if (!conversationId) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-orange-50">
+        <p className="text-xl text-orange-600 font-semibold">
+          Please choose a chat to start chatting
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col">
       {/* Hide the header */}
@@ -130,35 +140,42 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser }) => {
         ))}
       </div>
 
-      <form onSubmit={handleSendMessage} className="bg-orange-100 p-4">
-        <div className="flex items-center space-x-2">
+      <form onSubmit={handleSendMessage} className="bg-orange-100 p-4 shadow-lg">
+        <div className="flex items-center space-x-3">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message"
-            className="w-[70%] p-2 rounded-md"
+            className="flex-grow p-3 rounded-full border-2 border-orange-300 focus:border-orange-500 focus:outline-none transition-all duration-300 ease-in-out"
           />
-          <label className="cursor-pointer">
-            <FaImage className="text-orange-500 text-xl" />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
+          <div className="flex space-x-2">
+            <label className="cursor-pointer hover:scale-110 transition-transform duration-200">
+              <FaImage className="text-orange-500 text-2xl hover:text-orange-600" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </label>
+            <FaMapMarkerAlt
+              className="text-orange-500 text-2xl cursor-pointer hover:text-orange-600 hover:scale-110 transition-all duration-200"
+              onClick={handleSendLocation}
             />
-          </label>
-          <FaMapMarkerAlt
-            className="text-orange-500 text-xl cursor-pointer"
-            onClick={handleSendLocation}
-          />
-          <button type="submit" className="p-2 rounded-full bg-orange-500 text-white">
-            Send
-          </button>
+            <button
+              type="submit"
+              className="p-3 rounded-full bg-orange-500 text-white hover:bg-orange-600 transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
+            >
+              <FaPaperPlane className="text-xl" />
+            </button>
+          </div>
         </div>
         {imageFile && (
-          <div className="mt-2">
-            <span className="text-sm text-gray-600">Image selected: {imageFile.name}</span>
+          <div className="mt-3 animate-fadeIn">
+            <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full">
+              Image selected: {imageFile.name}
+            </span>
           </div>
         )}
       </form>

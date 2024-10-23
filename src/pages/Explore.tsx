@@ -155,7 +155,7 @@ const Explore: React.FC = () => {
     setMarkers([]); // Hide other markers
     setZoom(8);
     setShowPlaceModal(false);
-    setMapTypeId('terrain');
+
   };
 
   const handleRemoveRecentPlace = (id: string) => {

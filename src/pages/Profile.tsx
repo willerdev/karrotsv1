@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Camera, Moon, Sun, LogOut, Edit, Key, Phone, MapPin, Heart, List, ShoppingBag, PiggyBank, Gift, FileText } from 'lucide-react';
+import { Camera, Moon, Sun, LogOut, Edit, Key, Phone, MapPin, Heart, List, ShoppingBag, PiggyBank, Gift, FileText, Store, Plus } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { User } from '../types/User';
@@ -164,15 +164,15 @@ const Profile = () => {
             <Heart className="mr-2" />
             <span>Favorites</span>
           </Link>
-          <Link to="/listings" className="flex items-center p-3 bg-orange-100 rounded-lg">
+          <Link to="/myads" className="flex items-center p-3 bg-orange-100 rounded-lg">
             <List className="mr-2" />
             <span>My Listings</span>
           </Link>
-          <Link to="/purchases" className="flex items-center p-3 bg-orange-100 rounded-lg">
+          <Link to="/purchases" className="flex hidden items-center p-3 bg-orange-100 rounded-lg">
             <ShoppingBag className="mr-2" />
             <span>Purchases</span>
           </Link>
-          <Link to="/savings" className="flex items-center p-3 bg-orange-100 rounded-lg">
+          <Link to="/savings" className="flex hidden items-center p-3 bg-orange-100 rounded-lg">
             <PiggyBank className="mr-2" />
             <span>Savings</span>
           </Link>
@@ -216,6 +216,28 @@ const Profile = () => {
             </li> */}
           </ul>
         </div>
+
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-lg font-semibold">My Karrot Shop</h2>
+            <Link to="/shop-settings" className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors duration-300">
+              Shop Settings
+            </Link>
+          </div>
+          <Link to="/myads" className="bg-orange-100 text-orange-600 px-4 py-2 rounded-lg inline-flex items-center">
+            <Store className="mr-2" />
+            Shop Products
+          </Link>
+        </div>
+
+        {/* Add this floating button for adding a product */}
+        <Link
+          to="/add-product"
+          className="fixed bottom-20 left-8 bg-orange-500 text-white p-3 rounded-full shadow-lg hover:bg-orange-600 transition-colors duration-300"
+          aria-label="Add Product"
+        >
+          <Plus size={24} />
+        </Link>
 
         <button
           onClick={handleLogout}

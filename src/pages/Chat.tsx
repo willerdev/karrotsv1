@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import ChatList from '../components/ChatList';
-import ChatWindow from '../components/ChatWindow';
+
 import { Conversation } from '../types/Conversation';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -53,7 +52,7 @@ const ChatPage: React.FC = () => {
   return (
     <div className="flex h-screen bg-orange-100">
      
-        <ChatList conversations={conversations} />
+
   
       
  

@@ -15,6 +15,8 @@ const Locals = () => {
   const [showFullButton, setShowFullButton] = useState(true);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [imageError, setImageError] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredAds, setFilteredAds] = useState<Ad[]>([]);
 
   useEffect(() => {
     const fetchLocalAds = async () => {
@@ -44,6 +46,14 @@ const Locals = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const filtered = localAds.filter(ad =>
+      ad.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ad.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredAds(filtered);
+  }, [searchTerm, localAds]);
+
   if (loading) return <LoadingScreen />;
   if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
 
@@ -60,36 +70,41 @@ const Locals = () => {
         <h3 className="text-xl text-gray-500 font-semibold">Local Marketplace - Near You</h3>
       </div>
       <div className="mb-8">
-          {!imageError ? (
-            <img 
-              src="https://i0.wp.com/blog.karrotmarket.com/wp-content/uploads/2024/10/discover-the-joy-of-local-deals-with-karrot-1.webp?fit=2048%2C1024&ssl=1" 
-              alt="Featured banner" 
-              className="w-full h-48 object-cover rounded-lg" 
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-              <p className="text-gray-500">Failed to load banner image</p>
-            </div>
-          )}
-        </div>
+        {!imageError ? (
+          <img 
+            src="https://i0.wp.com/blog.karrotmarket.com/wp-content/uploads/2024/10/discover-the-joy-of-local-deals-with-karrot-1.webp?fit=2048%2C1024&ssl=1" 
+            alt="Featured banner" 
+            className="w-full h-48 object-cover rounded-lg" 
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+            <p className="text-gray-500">Failed to load banner image</p>
+          </div>
+        )}
+      </div>
+      
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search local ads..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-md"
+        />
+      </div>
 
-
-
-
-
-        
-      <LocalProductGrid ads={localAds} />
+      <LocalProductGrid ads={filteredAds} />
       <button
         ref={buttonRef}
-        onClick={() => navigate('/post-ad')} // Adjust this route as needed
+        onClick={() => navigate('/post-ad')}
         className={`fixed bottom-[62px] right-4 bg-orange-500 text-white rounded-full p-4 shadow-lg z-20 transition-all duration-300 ${
           showFullButton ? 'w-auto px-6' : 'w-12 h-12'
         }`}
       >
         <div className="flex items-center justify-center">
-          <FaPlus className={`${showFullButton ? 'mr-2' : ''}`} />
-          <span className={`${showFullButton ? 'inline' : 'hidden'}`}>Post a karrot</span>
+          <FaPlus className={showFullButton ? 'mr-2' : ''} />
+          <span className={showFullButton ? 'inline' : 'hidden'}>Post a karrot</span>
         </div>
       </button>
     </div>
