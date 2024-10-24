@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { FaWallet, FaArrowLeft } from 'react-icons/fa';
 import axios from 'axios';
 import { db } from '../firebase'; // Make sure to import your Firebase configuration
-import { collection, query, where, orderBy, limit, getDocs, addDoc, updateDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs, addDoc, updateDoc, doc, getDoc, DocumentReference } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext'; // Assuming you have an AuthContext
+import { toast, Toaster } from 'react-hot-toast'; // Updated import
 
 const Wallet = () => {
   const [showTopUpModal, setShowTopUpModal] = useState(false);
@@ -14,6 +15,11 @@ const Wallet = () => {
   const [provider, setProvider] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [transactionRef, setTransactionRef] = useState<DocumentReference | null>(null);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawPhoneNumber, setWithdrawPhoneNumber] = useState('');
 
   const { user } = useAuth(); // Get the current user from your AuthContext
 
@@ -62,7 +68,7 @@ const Wallet = () => {
       return;
     }
 
-    let walletRef;
+    let transactionRef;
 
     try {
       // First, get the access token
@@ -80,20 +86,20 @@ const Wallet = () => {
         }
       );
 
-      const accessToken = tokenResponse.data.access_token;
+      const accessToken = tokenResponse.data.access;
 
-      // Create a new wallet transaction document
-      walletRef = await addDoc(collection(db, 'wallet'), {
+      // Create a new transaction document
+      transactionRef = await addDoc(collection(db, 'transactions'), {
+        transId: Date.now().toString(), // You might want to use a more robust ID generation method
         userId: user.uid,
         amount: parseInt(amount),
-        transactionType: 'cashin',
-        balance: 0, // This will be updated after successful transaction
-        dateCreated: new Date(),
-        dateUpdated: new Date(),
-        status: 'pending'
+        type: 'topup',
+        status: 'pending',
+        dateCreated: new Date()
       });
+      setTransactionRef(transactionRef);
 
-      // Now, make the deposit request
+      // Make the deposit request
       const depositResponse = await axios.post(
         'https://payments.paypack.rw/api/transactions/cashin',
         {
@@ -110,55 +116,209 @@ const Wallet = () => {
       );
 
       if (depositResponse.data.success) {
-        // Update the user's balance
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-        const currentBalance = userDoc.data()?.balance || 0;
-        const newBalance = currentBalance + parseInt(amount);
-
-        await updateDoc(userDocRef, { balance: newBalance });
-
-        // Update the wallet transaction
-        await updateDoc(doc(db, 'wallet', walletRef.id), {
-          balance: newBalance,
-          status: 'success',
-          dateUpdated: new Date()
-        });
-
-        setBalance(newBalance);
+        setError('');
+        setLoading(false);
         setShowTopUpModal(false);
-        setAmount('');
-        setPhoneNumber('');
-        setProvider('');
+        
+        // Show a new modal or update UI to inform user
+        setShowConfirmationModal(true);
+        
+        // Start checking the transaction status
+        checkTransactionStatus(depositResponse.data.ref, accessToken);
       } else {
-        // Update the wallet transaction as failed
-        await updateDoc(doc(db, 'wallet', walletRef.id), {
-          status: 'failed',
-          dateUpdated: new Date()
-        });
-
-        setError('Deposit failed. Please try again.');
+        setSuccessMessage('Please check your phone for confirmation *182*7*1#');
+        toast.success('Please check your phone for confirmation *182*7*1#'); // Updated toast
+        setLoading(true);
+        checkTransactionStatus(depositResponse.data.ref, accessToken);
       }
     } catch (error) {
       console.error('Error topping up:', error);
-      setError('An error occurred. Please try again.');
-
-      // If there's an error, update the wallet transaction as failed
-      if (walletRef) {
-        await updateDoc(doc(db, 'wallet', walletRef.id), {
-          status: 'failed',
-          dateUpdated: new Date()
+      toast.error('An error occurred. Please try again.'); // Added error toast
+      if (transactionRef) {
+        await updateDoc(doc(db, 'transactions', transactionRef.id), {
+          status: 'failed'
         });
       }
+      setLoading(false);
+    }
+  };
+
+  const checkTransactionStatus = async (ref: string, accessToken: string) => {
+    let attempts = 0;
+    const maxAttempts = 10; // Adjust as needed
+    const checkInterval = 5000; // 5 seconds
+
+    const checkStatus = async () => {
+      if (attempts >= maxAttempts) {
+        setError('Transaction timed out. Please check your account or try again.');
+        setShowConfirmationModal(false);
+        return;
+      }
+
+      try {
+        const checkStatusResponse = await axios.get(
+          `https://payments.paypack.rw/api/events/transactions?ref=${ref}&kind=CASHIN&client=${phoneNumber}&status=pending`,
+          {
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            }
+          }
+        );
+
+        if (checkStatusResponse.data.status === 'success') {
+          if (!user) {
+            throw new Error('User not found');
+          }
+
+          // Update user's balance and transaction status
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userDocRef);
+          const currentBalance = userDoc.data()?.balance || 0;
+          const newBalance = currentBalance + parseInt(amount);
+
+          await updateDoc(userDocRef, { balance: newBalance });
+          if (transactionRef) {
+            await updateDoc(doc(db, 'transactions', transactionRef.id), {
+              status: 'success'
+            });
+          }
+
+          setBalance(newBalance);
+          setShowConfirmationModal(false);
+          // Show success message
+          setSuccessMessage('Top-up successful!');
+        } else if (checkStatusResponse.data.status === 'failed') {
+          setError('Transaction failed. Please try again.');
+          setShowConfirmationModal(false);
+        } else {
+          attempts++;
+          setTimeout(checkStatus, checkInterval);
+        }
+      } catch (error) {
+        console.error('Error checking transaction status:', error);
+        attempts++;
+        setTimeout(checkStatus, checkInterval);
+      }
+    };
+
+    checkStatus();
+  };
+
+  // Handle withdraw
+  const handleWithdraw = async () => {
+    setLoading(true);
+    setError('');
+
+    if (!user) {
+      setError('You must be logged in to withdraw from your wallet.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Check user's balance
+      const walletRef = collection(db, 'wallet');
+      const q = query(
+        walletRef,
+        where('userId', '==', user.uid),
+        orderBy('dateUpdated', 'desc'),
+        limit(1)
+      );
+
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        setError('Please make a deposit first.');
+        setLoading(false);
+        return;
+      }
+
+      const latestTransaction = querySnapshot.docs[0].data();
+      const currentBalance = latestTransaction.balance || 0;
+
+      if (parseInt(withdrawAmount) > currentBalance) {
+        setError('Insufficient balance for this withdrawal.');
+        setLoading(false);
+        return;
+      }
+
+      // Get access token
+      const tokenResponse = await axios.post(
+        'https://payments.paypack.rw/api/auth/agents/authorize',
+        {
+          client_id: 'bcab7088-91da-11ef-bf15-dead742b0238',
+          client_secret: '37eddf55fb3f4e6329d9dcbb04050294da39a3ee5e6b4b0d3255bfef95601890afd80709'
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
+
+      const accessToken = tokenResponse.data.access;
+
+      // Create a new transaction document
+      const transactionRef = await addDoc(collection(db, 'transactions'), {
+        transId: Date.now().toString(),
+        userId: user.uid,
+        amount: parseInt(withdrawAmount),
+        type: 'withdraw',
+        status: 'pending',
+        dateCreated: new Date()
+      });
+
+      // Make the withdraw request
+      const withdrawResponse = await axios.post(
+        'https://payments.paypack.rw/api/transactions/cashout',
+        {
+          amount: parseInt(withdrawAmount),
+          number: withdrawPhoneNumber
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+
+      if (withdrawResponse.data.success) {
+        // Update user's balance
+        const newBalance = currentBalance - parseInt(withdrawAmount);
+        await updateDoc(doc(db, 'wallet', querySnapshot.docs[0].id), {
+          balance: newBalance,
+          dateUpdated: new Date()
+        });
+
+        // Update transaction status
+        await updateDoc(doc(db, 'transactions', transactionRef.id), {
+          status: 'success'
+        });
+
+        setBalance(newBalance);
+        setShowWithdrawModal(false);
+        setSuccessMessage('Withdrawal successful!');
+        toast.success('Withdrawal successful!');
+      } else {
+        throw new Error('Withdrawal failed');
+      }
+    } catch (error) {
+      console.error('Error withdrawing:', error);
+      toast.error('An error occurred. Please try again.');
+      setError('Withdrawal failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle withdraw (you can implement this similarly to handleTopUp if needed)
-
   return (
     <div className="relative min-h-screen bg-gray-100">
+      <Toaster /> {/* Add this line to render the toast notifications */}
+      
       {/* Back button */}
       <button className="absolute top-4 left-4 flex items-center text-orange-500">
         <FaArrowLeft className="mr-2" />
@@ -256,7 +416,46 @@ const Wallet = () => {
         </div>
       )}
 
-      {/* Withdraw Modal (implement similarly to Top Up Modal) */}
+      {/* Withdraw Modal */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">Withdraw</h2>
+            <form onSubmit={(e) => { e.preventDefault(); handleWithdraw(); }}>
+              <input
+                type="number"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                placeholder="Enter amount"
+                className="w-full p-2 mb-4 border rounded"
+                required
+              />
+              <input
+                type="tel"
+                value={withdrawPhoneNumber}
+                onChange={(e) => setWithdrawPhoneNumber(e.target.value)}
+                placeholder="Enter phone number"
+                className="w-full p-2 mb-4 border rounded"
+                required
+              />
+              {error && <p className="text-red-500 mb-4">{error}</p>}
+              <button 
+                type="submit" 
+                className="w-full py-2 bg-orange-500 text-white rounded"
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : 'Withdraw'}
+              </button>
+            </form>
+            <button 
+              onClick={() => setShowWithdrawModal(false)} 
+              className="mt-4 text-gray-500"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
