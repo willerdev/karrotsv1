@@ -128,7 +128,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser }) => {
 
         console.log('Voice note uploaded:', voiceNoteUrl);
       } catch (error) {
-        console.error('Error uploading voice note:', error);
+        console.error('Error uploading voice note: in order just to update', error);
       }
     }
   };
@@ -169,13 +169,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser }) => {
   }
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col h-full relative">
       {/* Hide the header */}
       <div className="hidden">
         {/* Your header content goes here */}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-60">
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.senderId === currentUser.uid ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-xs ${message.senderId === currentUser.uid ? 'bg-orange-200 text-orange-900' : 'bg-white'} rounded-lg p-3`}>
@@ -191,7 +191,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser }) => {
         ))}
       </div>
 
-      <form onSubmit={handleSendMessage} className="bg-orange-100 p-4 shadow-lg">
+      <form onSubmit={handleSendMessage} className="bg-orange-100 p-4 pt-2 pb-12 shadow-lg absolute bottom-0 left-0 right-0">
         <div className="flex flex-col space-y-3">
           <input
             type="text"
@@ -254,9 +254,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser }) => {
           </div>
         )}
       </form>
-
-      {/* Add padding at the bottom */}
-      <div className="h-16"></div>
     </div>
   );
 };

@@ -69,7 +69,7 @@ const SearchPage = () => {
             </div>
           )}
         </div>
-      <h1 className="text-2xl font-bold mb-4">Search Results</h1>
+      <h1 className="text-2xl font-bold mb-4">Search karrots</h1>
       {loading ? (
         <LoadingScreen />
       ) : searchResults.length === 0 ? (
