@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AlertCircle, User, Mail, Lock, UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
+import emailjs from '@emailjs/browser';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -15,6 +16,9 @@ const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [referrerId, setReferrerId] = useState<string | null>(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [sentCode, setSentCode] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -28,6 +32,25 @@ const Register = () => {
       }
     }
   }, [location]);
+
+  const generateVerificationCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  const sendVerificationEmail = async (userEmail: string, code: string) => {
+    const templateParams = {
+      to_email: userEmail,
+      verification_code: code,
+    };
+
+    try {
+      await emailjs.send('service_5w02ryo', 'template_dt0imx9', templateParams);
+      console.log('Verification email sent successfully');
+    } catch (error) {
+      console.error('Failed to send verification email', error);
+      throw new Error('Failed to send verification email');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,14 +71,27 @@ const Register = () => {
 
     try {
       const result = await register(name, email, password);
-      if (typeof result === 'string' && referrerId) {
-        await saveReferral(result, referrerId);
+      if (typeof result === 'string') {
+        const code = generateVerificationCode();
+        setSentCode(code);
+        await sendVerificationEmail(email, code);
+        setIsVerifying(true);
       }
-      navigate('/locals');
     } catch (err: any) {
       setError(err.message || 'Failed to create an account. Please try again.');
-    } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (verificationCode === sentCode) {
+      if (referrerId) {
+        await saveReferral(email, referrerId);
+      }
+      navigate('/locals');
+    } else {
+      setError('Invalid verification code. Please try again.');
     }
   };
 
@@ -87,76 +123,104 @@ const Register = () => {
           </div>
         </motion.div>
       )}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <label htmlFor="name" className="block mb-1 font-medium">
-            <User className="inline mr-2" size={18} />
-            Name
-          </label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-300 focus:border-orange-500 transition"
-            required
-          />
-        </motion.div>
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <label htmlFor="email" className="block mb-1 font-medium">
-            <Mail className="inline mr-2" size={18} />
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-300 focus:border-orange-500 transition"
-            required
-          />
-        </motion.div>
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <label htmlFor="password" className="block mb-1 font-medium">
-            <Lock className="inline mr-2" size={18} />
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-300 focus:border-orange-500 transition"
-            required
-            minLength={6}
-          />
-        </motion.div>
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <label htmlFor="confirmPassword" className="block mb-1 font-medium">
-            <Lock className="inline mr-2" size={18} />
-            Confirm Password
-          </label>
-          <input
-            type="password"
-            id="confirmPassword"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-300 focus:border-orange-500 transition"
-            required
-            minLength={6}
-          />
-        </motion.div>
-        <motion.button
-          type="submit"
-          className="w-full bg-orange-500 text-white p-2 rounded disabled:opacity-50 flex items-center justify-center"
-          disabled={loading}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <UserPlus className="mr-2" size={18} />
-          {loading ? 'Registering...' : 'Register'}
-        </motion.button>
-      </form>
+      {isVerifying ? (
+        <form onSubmit={handleVerification} className="space-y-4">
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <label htmlFor="verificationCode" className="block mb-1 font-medium">
+              <Lock className="inline mr-2" size={18} />
+              Verification Code
+            </label>
+            <input
+              type="text"
+              id="verificationCode"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value)}
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-300 focus:border-orange-500 transition"
+              required
+            />
+          </motion.div>
+          <motion.button
+            type="submit"
+            className="w-full bg-orange-500 text-white p-2 rounded disabled:opacity-50 flex items-center justify-center"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <UserPlus className="mr-2" size={18} />
+            Verify
+          </motion.button>
+        </form>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <label htmlFor="name" className="block mb-1 font-medium">
+              <User className="inline mr-2" size={18} />
+              Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-300 focus:border-orange-500 transition"
+              required
+            />
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <label htmlFor="email" className="block mb-1 font-medium">
+              <Mail className="inline mr-2" size={18} />
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-300 focus:border-orange-500 transition"
+              required
+            />
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <label htmlFor="password" className="block mb-1 font-medium">
+              <Lock className="inline mr-2" size={18} />
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-300 focus:border-orange-500 transition"
+              required
+              minLength={6}
+            />
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <label htmlFor="confirmPassword" className="block mb-1 font-medium">
+              <Lock className="inline mr-2" size={18} />
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-orange-300 focus:border-orange-500 transition"
+              required
+              minLength={6}
+            />
+          </motion.div>
+          <motion.button
+            type="submit"
+            className="w-full bg-orange-500 text-white p-2 rounded disabled:opacity-50 flex items-center justify-center"
+            disabled={loading}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <UserPlus className="mr-2" size={18} />
+            {loading ? 'Registering...' : 'Register'}
+          </motion.button>
+        </form>
+      )}
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { collection, query, getDocs, orderBy, startAt, endAt } from 'firebase/firestore';
 import { db } from '../firebase'; // Ensure this path is correct
 import LoadingScreen from '../components/LoadingScreen';
+import { Link } from 'react-router-dom';
 
 // Add this interface at the top of your file
 interface Ad {
@@ -75,30 +76,27 @@ const SearchPage = () => {
         <p>No results found.</p>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-      
           {searchResults.map((ad) => (
-                
-                <div key={ad.id} className="border rounded-lg p-4 shadow-md">
-                {ad.images && ad.images.length > 0 && (
-                  <img src={ad.images[0]} alt={ad.title} className="w-full h-48 object-cover mb-2 rounded" />
-                )}
-                <h2 className="text-lg font-semibold">{ad.title}</h2>
-                <p className="text-gray-600">{ad.description.substring(0, 20)}...</p>
-                <p className="text-orange-500 font-bold mt-2"> {ad.price.toLocaleString()} Frw</p>
-                <div className="mt-2 flex justify-between items-center">
-                  <span className="text-sm text-gray-500">{ad.condition}</span>
-                  <span className="text-sm text-gray-500">{ad.location}</span>
-                </div>
-                <div className="mt-2 text-sm text-gray-500">
-                  <span>Category: {ad.category}</span>
-                </div>
-                {ad.negotiable && (
-                  <div className="mt-1 text-sm text-green-500">Negotiable</div>
-                )}
+            <Link to={`/product/${ad.id}`} key={ad.id} className="border rounded-lg p-4 shadow-md block hover:shadow-lg transition-shadow">
+              {ad.images && ad.images.length > 0 && (
+                <img src={ad.images[0]} alt={ad.title} className="w-full h-48 object-cover mb-2 rounded" />
+              )}
+              <h2 className="text-lg font-semibold">{ad.title}</h2>
+              <p className="text-gray-600">{ad.description.substring(0, 20)}...</p>
+              <p className="text-orange-500 font-bold mt-2"> {ad.price.toLocaleString()} Frw</p>
+              <div className="mt-2 flex justify-between items-center">
+                <span className="text-sm text-gray-500">{ad.condition}</span>
+                <span className="text-sm text-gray-500">{ad.location}</span>
               </div>
-            ))}
-          </div>
-  
+              <div className="mt-2 text-sm text-gray-500">
+                <span>Category: {ad.category}</span>
+              </div>
+              {ad.negotiable && (
+                <div className="mt-1 text-sm text-green-500">Negotiable</div>
+              )}
+            </Link>
+          ))}
+        </div>
       )}
     </div>
   );

@@ -46,6 +46,8 @@ import ShopSettings from './pages/ShopSettings'; // Add this import
 import KarrotPage from './pages/KarrotPage';
 import Support from './pages/Support';
 import EarnWithKarrot from './pages/EarnWithKarrot';
+import DepositHistory from './pages/DepositHistory';
+import WithdrawHistory from './pages/WithdrawHistory';
 
 import NotFound from './pages/NotFound';
 
@@ -114,6 +116,8 @@ function App() {
               <Route path="/shop/:shopId" element={<KarrotPage />} />
               <Route path="/support" element={<Support />} />
               <Route path="/earn-with-karrot" element={<EarnWithKarrot />} />
+              <Route path="/deposit-history" element={<DepositHistory />} />
+              <Route path="/withdraw-history" element={<WithdrawHistory />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

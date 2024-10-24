@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaWallet, FaArrowLeft } from 'react-icons/fa';
 import axios from 'axios';
 import { db } from '../firebase'; // Make sure to import your Firebase configuration
-import { collection, query, where, orderBy, limit, getDocs, addDoc, updateDoc, doc, getDoc, DocumentReference } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs, addDoc, updateDoc, doc, getDoc, DocumentReference, setDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext'; // Assuming you have an AuthContext
 import { toast, Toaster } from 'react-hot-toast'; // Updated import
 
@@ -23,38 +23,38 @@ const Wallet = () => {
 
   const { user } = useAuth(); // Get the current user from your AuthContext
 
-  // Fetch balance
+  // Fetch or create wallet
   useEffect(() => {
-    const fetchBalance = async () => {
+    const fetchOrCreateWallet = async () => {
       if (!user) {
         console.error('User not logged in');
         return;
       }
 
       try {
-        const walletRef = collection(db, 'wallet');
-        const q = query(
-          walletRef,
-          where('userId', '==', user.uid),
-          orderBy('dateUpdated', 'desc'),
-          limit(1)
-        );
-
-        const querySnapshot = await getDocs(q);
+        const walletRef = doc(db, 'wallets', user.uid);
+        const walletDoc = await getDoc(walletRef);
         
-        if (!querySnapshot.empty) {
-          const latestTransaction = querySnapshot.docs[0].data();
-          setBalance(latestTransaction.balance || 0);
-        } else {
+        if (!walletDoc.exists()) {
+          // Create a new wallet if it doesn't exist
+          await setDoc(walletRef, {
+            userId: user.uid,
+            balance: 0,
+            dateCreated: new Date(),
+            dateUpdated: new Date()
+          });
           setBalance(0);
+        } else {
+          // Wallet exists, set the balance
+          setBalance(walletDoc.data().balance || 0);
         }
       } catch (error) {
-        console.error('Error fetching balance:', error);
-        setError('Failed to fetch balance. Please try again later.');
+        console.error('Error fetching or creating wallet:', error);
+        setError('Failed to fetch wallet. Please try again later.');
       }
     };
 
-    fetchBalance();
+    fetchOrCreateWallet();
   }, [user]);
 
   // Handle top-up
@@ -129,6 +129,7 @@ const Wallet = () => {
         setSuccessMessage('Please check your phone for confirmation *182*7*1#');
         toast.success('Please check your phone for confirmation *182*7*1#'); // Updated toast
         setLoading(true);
+        
         checkTransactionStatus(depositResponse.data.ref, accessToken);
       }
     } catch (error) {
@@ -145,8 +146,8 @@ const Wallet = () => {
 
   const checkTransactionStatus = async (ref: string, accessToken: string) => {
     let attempts = 0;
-    const maxAttempts = 10; // Adjust as needed
-    const checkInterval = 5000; // 5 seconds
+    const maxAttempts = 120; // Adjust as needed
+    const checkInterval = 10000; // 10 seconds
 
     const checkStatus = async () => {
       if (attempts >= maxAttempts) {
@@ -179,9 +180,13 @@ const Wallet = () => {
 
           await updateDoc(userDocRef, { balance: newBalance });
           if (transactionRef) {
-            await updateDoc(doc(db, 'transactions', transactionRef.id), {
-              status: 'success'
-            });
+            const q = query(collection(db, 'transactions'), where('transId', '==', transactionRef.id));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+              await updateDoc(querySnapshot.docs[0].ref, {
+                status: 'success'
+              });
+            }
           }
 
           setBalance(newBalance);
@@ -218,24 +223,16 @@ const Wallet = () => {
 
     try {
       // Check user's balance
-      const walletRef = collection(db, 'wallet');
-      const q = query(
-        walletRef,
-        where('userId', '==', user.uid),
-        orderBy('dateUpdated', 'desc'),
-        limit(1)
-      );
-
-      const querySnapshot = await getDocs(q);
+      const walletRef = doc(db, 'wallets', user.uid);
+      const walletDoc = await getDoc(walletRef);
       
-      if (querySnapshot.empty) {
-        setError('Please make a deposit first.');
+      if (!walletDoc.exists()) {
+        setError('Wallet not found. Please try again.');
         setLoading(false);
         return;
       }
 
-      const latestTransaction = querySnapshot.docs[0].data();
-      const currentBalance = latestTransaction.balance || 0;
+      const currentBalance = walletDoc.data().balance || 0;
 
       if (parseInt(withdrawAmount) > currentBalance) {
         setError('Insufficient balance for this withdrawal.');
@@ -289,7 +286,7 @@ const Wallet = () => {
       if (withdrawResponse.data.success) {
         // Update user's balance
         const newBalance = currentBalance - parseInt(withdrawAmount);
-        await updateDoc(doc(db, 'wallet', querySnapshot.docs[0].id), {
+        await updateDoc(walletRef, {
           balance: newBalance,
           dateUpdated: new Date()
         });
