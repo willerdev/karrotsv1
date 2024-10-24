@@ -2,22 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Camera, Moon, Sun, LogOut, Edit, Key, Phone, MapPin, Heart, List, ShoppingBag, PiggyBank, Gift, FileText, Store, Plus, HelpCircle, DollarSign } from 'lucide-react';
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { User } from '../types/User';
 import Modal from '../components/Modal';
 import LoadingScreen from '../components/LoadingScreen';
 
-// Add this type definition
 type RecentlyViewedItem = {
   link: string;
   title: string;
 };
 
-// Add this type definition
 type BanReason = {
   id: string;
   title: string;
+};
+
+type Transaction = {
+  id: string;
+  adId: string;
+  amount: number;
+  method: string;
+  createdAt: { seconds: number };
 };
 
 const Profile = () => {
@@ -33,6 +39,7 @@ const Profile = () => {
   const [imageError, setImageError] = useState(false);
   const [showBanReasonModal, setShowBanReasonModal] = useState(false);
   const [banReasons, setBanReasons] = useState<BanReason[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -61,11 +68,9 @@ const Profile = () => {
 
     fetchUserData();
 
-    // Fetch recently viewed items from localStorage
     const recentItems = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
     setRecentlyViewedItems(recentItems);
 
-    // Fetch ban reasons
     const fetchBanReasons = async () => {
       try {
         const reasonsCollection = collection(db, 'reasons');
@@ -81,6 +86,28 @@ const Profile = () => {
     };
 
     fetchBanReasons();
+
+    const fetchTransactions = async () => {
+      if (!user) return;
+
+      const transactionsRef = collection(db, 'paymentsList');
+      const q = query(transactionsRef, where('userId', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+
+      const transactionsData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          adId: data.adId,
+          amount: data.amount,
+          method: data.method,
+          createdAt: data.createdAt,
+        };
+      });
+      setTransactions(transactionsData);
+    };
+
+    fetchTransactions();
   }, [user]);
 
   const handleLogout = async () => {
@@ -93,14 +120,12 @@ const Profile = () => {
     }
   };
 
- 
   const handleEditClick = (field: string) => {
     setEditField(field);
     setShowEditModal(true);
   };
 
   const handleEditSubmit = (value: string) => {
-    // Implement the logic to update the user data
     console.log(`Updating ${editField} to ${value}`);
     setShowEditModal(false);
   };
@@ -130,38 +155,20 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* O Pay Section */}
-        <div className="mb-2">
-          {!imageError ? (
-            <img 
-              src="https://i0.wp.com/blog.karrotmarket.com/wp-content/uploads/2024/08/the-ethical-side-of-secondhand-shopping-how-honesty-and-community-can-transform-your-experience.webp?fit=1792%2C1024&ssl=1" 
-              alt="Featured banner" 
-              className="w-full h-48 object-cover rounded-lg" 
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-              <p className="text-gray-500">Failed to load banner image</p>
-            </div>
-          )}
-        </div>
-<div className="mb-6">
-<div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-semibold">Settings</h2>
-            <Link to="/subscription" className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors duration-300">
-              Subscription
-            </Link>
-          </div>
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-semibold">My Posted Ads</h2>
-            <Link to="/myads" className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors duration-300">
-              View My ads
-            </Link>
-          </div>
-</div>
-        {/* Recently Viewed Section */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">Recently viewed</h2>
+          <h2 className="text-lg font-semibold mb-2">Transaction History</h2>
+          <div className="flex space-x-4">
+            <Link to="/wallet" className="bg-orange-100 text-orange-600 px-4 py-2 rounded-full">
+              Check Wallet
+            </Link>
+            <Link to="/transactions" className="bg-orange-100 text-orange-600 px-4 py-2 rounded-full">
+              Check Transactions
+            </Link>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-2">Recently Viewed</h2>
           {recentlyViewedItems.length === 0 ? (
             <p>No recently viewed items</p>
           ) : (
@@ -183,37 +190,38 @@ const Profile = () => {
           )}
         </div>
 
-        {/* Profile Actions */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <Link to="/favorites" className="flex items-center p-3 bg-orange-100 rounded-lg">
-            <Heart className="mr-2" />
-            <span>Favorites</span>
-          </Link>
-          <Link to="/myads" className="flex items-center p-3 bg-orange-100 rounded-lg">
-            <List className="mr-2" />
-            <span>My Listings</span>
-          </Link>
-          <Link to="/purchases" className="flex hidden items-center p-3 bg-orange-100 rounded-lg">
-            <ShoppingBag className="mr-2" />
-            <span>Purchases</span>
-          </Link>
-          <Link to="/savings" className="flex hidden items-center p-3 bg-orange-100 rounded-lg">
-            <PiggyBank className="mr-2" />
-            <span>Savings</span>
-          </Link>
-          <Link to="/events" className="flex items-center p-3 bg-orange-100 rounded-lg">
-            <Gift className="mr-2" />
-            <span>Events</span>
-          </Link>
-          <Link to="/whats-new" className="flex items-center p-3 bg-orange-100 rounded-lg">
-            <FileText className="mr-2" />
-            <span>What's New</span>
-          </Link>
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-2">Profile Actions</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <Link to="/favorites" className="flex items-center p-3 bg-orange-100 rounded-lg">
+              <Heart className="mr-2" />
+              <span>Favorites</span>
+            </Link>
+            <Link to="/myads" className="flex items-center p-3 bg-orange-100 rounded-lg">
+              <List className="mr-2" />
+              <span>My Listings</span>
+            </Link>
+            <Link to="/purchases" className="flex hidden items-center p-3 bg-orange-100 rounded-lg">
+              <ShoppingBag className="mr-2" />
+              <span>Purchases</span>
+            </Link>
+            <Link to="/savings" className="flex hidden items-center p-3 bg-orange-100 rounded-lg">
+              <PiggyBank className="mr-2" />
+              <span>Savings</span>
+            </Link>
+            <Link to="/events" className="flex items-center p-3 bg-orange-100 rounded-lg">
+              <Gift className="mr-2" />
+              <span>Events</span>
+            </Link>
+            <Link to="/whats-new" className="flex items-center p-3 bg-orange-100 rounded-lg">
+              <FileText className="mr-2" />
+              <span>What's New</span>
+            </Link>
+          </div>
         </div>
 
-        {/* Settings */}
         <div className="mb-6">
-     
+          <h2 className="text-lg font-semibold mb-2">Settings</h2>
           <ul className="space-y-2">
             <li className="flex items-center justify-between">
               <span>Edit Profile</span>
@@ -232,30 +240,20 @@ const Profile = () => {
                 </button>
               </div>
             </li>
-            {/* <li className="flex items-center justify-between">
-              <span>Dark Mode</span>
-              <button onClick={toggleDarkMode} className="flex items-center">
-                {darkMode ? <Sun className="mr-2" /> : <Moon className="mr-2" />}
-                {darkMode ? 'Light Mode' : 'Dark Mode'}
-              </button>
-            </li> */}
           </ul>
         </div>
 
         <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-semibold">My Karrot Shop</h2>
-            <Link to="/shop-settings" className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors duration-300">
-              Shop Settings
-            </Link>
-          </div>
+          <h2 className="text-lg font-semibold mb-2">My Karrot Shop</h2>
+          <Link to="/shop-settings" className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors duration-300">
+            Shop Settings
+          </Link>
           <Link to="/myads" className="bg-orange-100 text-orange-600 px-4 py-2 rounded-lg inline-flex items-center">
             <Store className="mr-2" />
             Shop Products
           </Link>
         </div>
 
-        {/* Add this floating button for adding a product */}
         <Link
           to="/postad"
           className="fixed bottom-20 left-8 bg-orange-500 text-white p-3 rounded-full shadow-lg hover:bg-orange-600 transition-colors duration-300"
@@ -290,7 +288,6 @@ const Profile = () => {
           </button>
         </div>
 
-        {/* Add this section before the Support section */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-2">Earn with Karrot</h2>
           <Link to="/earn-with-karrot" className="flex items-center p-3 bg-orange-100 rounded-lg">
@@ -298,7 +295,6 @@ const Profile = () => {
             <span>Referral Program</span>
           </Link>
         </div>
-
       </div>
 
       <Modal
@@ -336,7 +332,6 @@ const Profile = () => {
           </ul>
         </div>
       </Modal>
-
     </div>
   );
 };

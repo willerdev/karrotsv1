@@ -48,6 +48,7 @@ import Support from './pages/Support';
 import EarnWithKarrot from './pages/EarnWithKarrot';
 import DepositHistory from './pages/DepositHistory';
 import WithdrawHistory from './pages/WithdrawHistory';
+import Transactions from './pages/Transactions'; // Import the Transactions component
 
 import NotFound from './pages/NotFound';
 
@@ -118,6 +119,7 @@ function App() {
               <Route path="/earn-with-karrot" element={<EarnWithKarrot />} />
               <Route path="/deposit-history" element={<DepositHistory />} />
               <Route path="/withdraw-history" element={<WithdrawHistory />} />
+              <Route path="/transactions" element={<Transactions />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

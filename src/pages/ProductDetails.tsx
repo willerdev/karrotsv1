@@ -2,7 +2,7 @@ import React, { useState, useEffect, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MessageCircle, Flag, MapPin, Star, CheckCircle, CreditCard, Heart, Mail, Loader, Smartphone, Battery, Cpu, Award, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, getDoc, collection, getDocs, addDoc, updateDoc, arrayUnion, arrayRemove, setDoc, serverTimestamp, query, where } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, addDoc, updateDoc, arrayUnion, arrayRemove, setDoc, serverTimestamp, query, where, increment } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Ad } from '../types/Ad';
 import { User } from '../types/User';
@@ -34,6 +34,9 @@ const ProductDetails: React.FC = () => {
   const [cardNumber, setCardNumber] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [isOfferLoading, setIsOfferLoading] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
+  const [paymentOptions, setPaymentOptions] = useState<string[]>([]);
+  const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
 
   // Add this animation variant
   const fadeIn = {
@@ -249,12 +252,84 @@ const ProductDetails: React.FC = () => {
     }
   };
 
-  const handlePayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Implement payment logic here
-    console.log('Processing payment:', paymentMethod, cardNumber || mobileNumber);
-    // After successful payment:
-    setIsPaymentModalOpen(false);
+  const handleBuyNow = async () => {
+    if (!user || !product) return;
+
+    setIsPaymentModalOpen(true);
+    setPaymentMessage('Initializing payment...');
+
+    try {
+      const walletRef = doc(db, 'wallets', user.uid); // Updated table name
+      const walletSnap = await getDoc(walletRef);
+
+      if (walletSnap.exists()) {
+        const walletData = walletSnap.data();
+        const walletBalance = walletData.balance;
+
+        if (walletBalance >= product.price) {
+          setPaymentOptions(['Pay with Cash', 'Use Wallet']);
+        } else {
+          setPaymentOptions(['Pay with Cash']);
+          setPaymentMessage('Wallet amount insufficient');
+        }
+      } else {
+        setPaymentOptions(['Pay with Cash']);
+        setPaymentMessage('Wallet not found');
+      }
+    } catch (error) {
+      console.error('Error checking wallet:', error);
+      setPaymentMessage('Failed to initialize payment. Please try again.');
+    }
+  };
+
+  const handlePaymentOption = async (option: string) => {
+    if (!user || !product) return;
+
+    setIsPaymentProcessing(true);
+
+    try {
+      if (option === 'Pay on Delivery') {
+        await addDoc(collection(db, 'paymentsList'), {
+          userId: user.uid,
+          adId: product.id,
+          amount: product.price,
+          method: 'Cash on Delivery',
+          createdAt: serverTimestamp(),
+        });
+        setPaymentMessage('Payment will be processed on delivery');
+      } else if (option === 'Use Wallet') {
+        const walletRef = doc(db, 'wallets', user.uid);
+        const walletSnap = await getDoc(walletRef);
+        if (walletSnap.exists()) {
+          const walletData = walletSnap.data();
+          const walletBalance = walletData.balance;
+
+          if (walletBalance >= product.price) {
+            await updateDoc(walletRef, {
+              balance: increment(-product.price),
+            });
+            await addDoc(collection(db, 'paymentsList'), {
+              userId: user.uid,
+              adId: product.id,
+              amount: product.price,
+              method: 'Wallet',
+              createdAt: serverTimestamp(),
+            });
+            setPaymentMessage('Payment successful with wallet');
+          } else {
+            setPaymentMessage('Insufficient wallet balance');
+          }
+        } else {
+          setPaymentMessage('Wallet not found');
+        }
+      }
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      setPaymentMessage('Failed to process payment. Please try again.');
+    } finally {
+      setIsPaymentProcessing(false);
+      setTimeout(() => setIsPaymentModalOpen(false), 5000); // Dismiss modal after 5 seconds
+    }
   };
 
   // Add this function to check if the product is sold
@@ -343,7 +418,7 @@ const ProductDetails: React.FC = () => {
                 </button>
               ) : (
                 <button
-                  onClick={() => setIsPaymentModalOpen(true)}
+                  onClick={handleBuyNow}
                   className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors flex-grow"
                 >
                   <CreditCard size={20} className="mr-2" />
@@ -560,54 +635,23 @@ const ProductDetails: React.FC = () => {
                     >
                       Payment Details
                     </Dialog.Title>
-                    <form onSubmit={handlePayment}>
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700">Payment Method</label>
-                        <select
-                          value={paymentMethod}
-                          onChange={(e) => setPaymentMethod(e.target.value as 'card' | 'mobile')}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                        >
-                          <option value="card">Credit Card</option>
-                          <option value="mobile">Mobile Money</option>
-                        </select>
-                      </div>
-                      {paymentMethod === 'card' ? (
-                        <div className="mb-4">
-                          <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700">Card Number</label>
-                          <input
-                            type="text"
-                            id="cardNumber"
-                            value={cardNumber}
-                            onChange={(e) => setCardNumber(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                            placeholder="1234 5678 9012 3456"
-                            required
-                          />
-                        </div>
-                      ) : (
-                        <div className="mb-4">
-                          <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700">Mobile Number</label>
-                          <input
-                            type="tel"
-                            id="mobileNumber"
-                            value={mobileNumber}
-                            onChange={(e) => setMobileNumber(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                            placeholder="07X XXX XXXX"
-                            required
-                          />
-                        </div>
-                      )}
-                      <div className="mt-4">
+                    <div className="mt-4">
+                      {paymentMessage && <p>{paymentMessage}</p>}
+                      {paymentOptions.map((option) => (
                         <button
-                          type="submit"
-                          className="inline-flex justify-center rounded-md border border-transparent bg-orange-100 px-4 py-2 text-sm font-medium text-orange-900 hover:bg-orange-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                          key={option}
+                          onClick={() => handlePaymentOption(option)}
+                          className="inline-flex justify-center rounded-md border border-transparent bg-green-100 px-4 py-2 text-sm font-medium text-orange-900 hover:bg-orange-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                          disabled={isPaymentProcessing}
                         >
-                          Process Payment
+                          {isPaymentProcessing ? <Loader size={20} className="animate-spin mr-2" /> : null}
+                          {option}
                         </button>
-                      </div>
-                    </form>
+                      ))}
+                    
+                       
+                  
+                    </div>
                   </Dialog.Panel>
                 </Transition.Child>
               </div>
