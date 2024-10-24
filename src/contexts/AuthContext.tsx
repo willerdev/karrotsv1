@@ -3,7 +3,7 @@ import { User as FirebaseUser } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { createUser } from '../services/userService';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -11,7 +11,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  saveReferral: (newUserId: string, referrerId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,18 +70,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await signOut(auth);
   };
 
-  const saveReferral = async (newUserId: string, referrerId: string) => {
-    const referralRef = doc(db, "referrals", newUserId);
-    await setDoc(referralRef, { referrerId, createdAt: new Date() });
-  };
-
   const value = {
     user,
     loading,
     login,
     register,
     logout,
-    saveReferral,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

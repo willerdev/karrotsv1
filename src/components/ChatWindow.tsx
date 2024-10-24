@@ -5,7 +5,7 @@ import { User } from '../types/User';
 import { db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { FaImage, FaMapMarkerAlt, FaArrowLeft, FaPaperPlane } from 'react-icons/fa';
+import { FaImage, FaMapMarkerAlt, FaArrowLeft, FaPaperPlane, FaMicrophone, FaSmile, FaFilePdf } from 'react-icons/fa';
 
 interface ChatWindowProps {
   currentUser: User;
@@ -107,6 +107,57 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser }) => {
     return <p>{content}</p>;
   };
 
+  const handleVoiceNoteUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const storage = getStorage();
+        const voiceNoteRef = ref(storage, `voiceNotes/${Date.now()}_${file.name}`);
+        await uploadBytes(voiceNoteRef, file);
+        const voiceNoteUrl = await getDownloadURL(voiceNoteRef);
+
+        // Optionally, you can send the voice note URL as a message
+        await addDoc(collection(db, 'messages'), {
+          conversationId,
+          senderId: currentUser.uid,
+          content: '', // or any default text
+          voiceNoteUrl,
+          createdAt: serverTimestamp(),
+          readBy: [currentUser.uid]
+        });
+
+        console.log('Voice note uploaded:', voiceNoteUrl);
+      } catch (error) {
+        console.error('Error uploading voice note:', error);
+      }
+    }
+  };
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const storage = getStorage();
+        const pdfRef = ref(storage, `pdfs/${Date.now()}_${file.name}`);
+        await uploadBytes(pdfRef, file);
+        const pdfUrl = await getDownloadURL(pdfRef);
+
+        await addDoc(collection(db, 'messages'), {
+          conversationId,
+          senderId: currentUser.uid,
+          content: `PDF: ${file.name}`,
+          pdfUrl,
+          createdAt: serverTimestamp(),
+          readBy: [currentUser.uid]
+        });
+
+        console.log('PDF uploaded:', pdfUrl);
+      } catch (error) {
+        console.error('Error uploading PDF:', error);
+      }
+    }
+  };
+
   if (!conversationId) {
     return (
       <div className="flex-1 flex items-center justify-center bg-orange-50">
@@ -141,7 +192,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser }) => {
       </div>
 
       <form onSubmit={handleSendMessage} className="bg-orange-100 p-4 shadow-lg">
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col space-y-3">
           <input
             type="text"
             value={newMessage}
@@ -149,20 +200,44 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser }) => {
             placeholder="Type a message"
             className="flex-grow p-3 rounded-full border-2 border-orange-300 focus:border-orange-500 focus:outline-none transition-all duration-300 ease-in-out"
           />
-          <div className="flex space-x-2">
-            <label className="cursor-pointer hover:scale-110 transition-transform duration-200">
-              <FaImage className="text-orange-500 text-2xl hover:text-orange-600" />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
+          <div className="flex justify-between items-center space-x-2">
+            <div className="flex space-x-2">
+              <label className="cursor-pointer hover:scale-110 transition-transform duration-200">
+                <FaImage className="text-orange-500 text-2xl hover:text-orange-600" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
+              <FaMapMarkerAlt
+                className="text-orange-500 text-2xl cursor-pointer hover:text-orange-600 hover:scale-110 transition-all duration-200"
+                onClick={handleSendLocation}
               />
-            </label>
-            <FaMapMarkerAlt
-              className="text-orange-500 text-2xl cursor-pointer hover:text-orange-600 hover:scale-110 transition-all duration-200"
-              onClick={handleSendLocation}
-            />
+              <label className="cursor-pointer hover:scale-110 transition-transform duration-200">
+                <FaMicrophone className="text-orange-500 text-2xl hover:text-orange-600" />
+                <input
+                  type="file"
+                  accept="audio/*"
+                  onChange={handleVoiceNoteUpload}
+                  className="hidden"
+                />
+              </label>
+              <label className="cursor-pointer hover:scale-110 transition-transform duration-200">
+                <FaSmile className="text-orange-500 text-2xl hover:text-orange-600" />
+                {/* Implement emoji picker logic */}
+              </label>
+              <label className="cursor-pointer hover:scale-110 transition-transform duration-200">
+                <FaFilePdf className="text-orange-500 text-2xl hover:text-orange-600" />
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handlePdfUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
             <button
               type="submit"
               className="p-3 rounded-full bg-orange-500 text-white hover:bg-orange-600 transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-300"
