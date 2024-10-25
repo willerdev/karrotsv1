@@ -281,6 +281,9 @@ const ProductDetails: React.FC = () => {
   const handleBuyNow = async () => {
     if (!user || !product) return;
 
+    console.log('Current wallet balance:', walletBalance);
+    console.log('Product price:', product.price);
+
     if (walletBalance < product.price) {
       setInsufficientFunds(true);
       toast.error('Insufficient funds in your wallet', {
@@ -302,6 +305,8 @@ const ProductDetails: React.FC = () => {
 
         const userData = userDoc.data();
         const currentBalance = userData.walletBalance || 0;
+
+        console.log('Database wallet balance:', currentBalance);
 
         if (currentBalance < product.price) {
           throw new Error("Insufficient funds");
@@ -328,7 +333,9 @@ const ProductDetails: React.FC = () => {
       });
 
       // Update local wallet balance
-      updateWalletBalance(walletBalance - product.price);
+      const newBalance = walletBalance - product.price;
+      updateWalletBalance(newBalance);
+      console.log('Updated wallet balance:', newBalance);
 
       // Add notifications for seller and buyer
       await addDoc(collection(db, 'notifications'), {

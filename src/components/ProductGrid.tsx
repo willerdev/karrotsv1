@@ -104,48 +104,51 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
  
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-      {ads.slice(0, 20)
-        .filter(ad => ad.status !== 'sold')
-        .map((ad) => (
-          <Link to={`/product/${ad.id}`} key={ad.id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-64">
-            <div className="relative h-40">
-              <img src={ad.images[0]} alt={ad.title} className="w-full h-full object-cover" />
-              <button 
-                className="absolute top-2 right-2 bg-white rounded-full p-1"
-                onClick={(e) => handleSaveAd(e, ad)}
-              >
-                <Heart 
-                  size={16} 
-                  className={savedAds.includes(ad.id) ? 'text-red-500' : 'text-gray-500'} 
-                  fill={savedAds.includes(ad.id) ? 'currentColor' : 'none'}
-                />
-              </button>
-              {ad.status === 'active' && ad.isVip && (
-                <span className="absolute top-2 left-2 bg-yellow-400 text-xs font-bold px-2 py-1 rounded">
-                  Verified
-                </span>
-              )}
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      {ads.map((ad) => (
+        <Link to={`/product/${ad.id}`} key={ad.id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+          <div className="relative">
+            <img src={ad.images[0]} alt={ad.title} className="w-full h-40 object-cover" />
+            <button 
+              className="absolute top-2 right-2 bg-white rounded-full p-1"
+              onClick={(e) => handleSaveAd(e, ad)}
+            >
+              <Heart 
+                size={20} 
+                className={user && ad.savedBy?.includes(user.uid) ? 'text-orange-500' : 'text-gray-500'} 
+                fill={user && ad.savedBy?.includes(user.uid) ? 'currentColor' : 'none'}
+              />
+            </button>
+            {ad.status === 'active' && ad.isVip && (
+              <span className="absolute top-2 left-2 bg-yellow-400 text-xs font-bold px-2 py-1 rounded">
+                Verified
+              </span>
+            )}
+            {ad.status === 'underDeal' && (
+              <span className="absolute bottom-2 left-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded">
+                May be bought
+              </span>
+            )}
+          </div>
+          <div className="p-2 flex-grow flex flex-col justify-between">
+            <div>
+              <h3 className="font-semibold text-xs mb-1 truncate">{ad.title}</h3>
+              <p className="text-orange-500 font-bold text-sm">{ad.price.toLocaleString()} Frw </p>
             </div>
-            <div className="p-2 flex-grow flex flex-col justify-between">
-              <div>
-                <h3 className="font-semibold text-xs mb-1 truncate">{ad.title}</h3>
-                <p className="text-orange-500 font-bold text-sm">{ad.price.toLocaleString()} Frw </p>
-              </div>
-              <div>
-                <p className="bg-gray-100 text-gray-700 text-xs p-1 rounded-md mb-1 flex items-center">
-                  <MapPin size={12} className="mr-1" /> 
-                  <span className="font-semibold mr-2">{ad.location}</span>
-                  
-                  <Tag size={12} className="mr-1" /> <span className="text-gray-600">{ad.condition}</span>
-                </p>
-                <p className="text-orange-500 text-xs truncate flex items-center">
-                  <User size={16} className="mr-1" /> {sellersData[ad.userId] || 'Loading...'}
-                </p>
-              </div>
+            <div>
+              <p className="bg-gray-100 text-gray-700 text-xs p-1 rounded-md mb-1 flex items-center">
+                <MapPin size={12} className="mr-1" /> 
+                <span className="font-semibold mr-2">{ad.location}</span>
+                
+                <Tag size={12} className="mr-1" /> <span className="text-gray-600">{ad.condition}</span>
+              </p>
+              <p className="text-orange-500 text-xs truncate flex items-center">
+                <User size={16} className="mr-1" /> {sellersData[ad.userId] || 'Loading...'}
+              </p>
             </div>
-          </Link>
-        ))}
+          </div>
+        </Link>
+      ))}
     </div>
   );
 };
