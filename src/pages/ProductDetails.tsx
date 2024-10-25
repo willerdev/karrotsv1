@@ -10,6 +10,16 @@ import { Dialog, Transition } from '@headlessui/react';
 import LoadingScreen from '../components/LoadingScreen';
 import { motion } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
+import { useWallet } from '../contexts/WalletContext'; // Adjust the import path as needed
+import { WalletProvider } from '../contexts/WalletContext'; // Import the WalletProvider
+
+const ProductDetailsWrapper: React.FC = () => {
+  return (
+    <WalletProvider>
+      <ProductDetails />
+    </WalletProvider>
+  );
+};
 
 const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -39,6 +49,8 @@ const ProductDetails: React.FC = () => {
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [notificationMethod, setNotificationMethod] = useState<'email' | 'sms' | 'system'>('system');
+  const { walletBalance, updateWalletBalance } = useWallet(); // Add this line
+  const [insufficientFunds, setInsufficientFunds] = useState(false);
 
   // Add this animation variant
   const fadeIn = {
@@ -269,31 +281,73 @@ const ProductDetails: React.FC = () => {
   const handleBuyNow = async () => {
     if (!user || !product) return;
 
+    if (walletBalance < product.price) {
+      setInsufficientFunds(true);
+      toast.error('Insufficient funds in your wallet', {
+        icon: '❌',
+        duration: 3000,
+      });
+      return;
+    }
+
     try {
       const adRef = doc(db, 'ads', product.id);
-      await updateDoc(adRef, {
-        status: 'underDeal',
+      const userRef = doc(db, 'users', user.uid);
+
+      await runTransaction(db, async (transaction) => {
+        const userDoc = await transaction.get(userRef);
+        if (!userDoc.exists()) {
+          throw new Error("User document does not exist!");
+        }
+
+        const userData = userDoc.data();
+        const currentBalance = userData.walletBalance || 0;
+
+        if (currentBalance < product.price) {
+          throw new Error("Insufficient funds");
+        }
+
+        transaction.update(userRef, {
+          walletBalance: currentBalance - product.price
+        });
+
+        transaction.update(adRef, {
+          status: 'sold',
+        });
+
+        // Add transaction to seller's wallet
+        const sellerRef = doc(db, 'users', product.userId);
+        const sellerDoc = await transaction.get(sellerRef);
+        if (sellerDoc.exists()) {
+          const sellerData = sellerDoc.data();
+          const sellerBalance = sellerData.walletBalance || 0;
+          transaction.update(sellerRef, {
+            walletBalance: sellerBalance + product.price
+          });
+        }
       });
 
-      // Add notification for seller
+      // Update local wallet balance
+      updateWalletBalance(walletBalance - product.price);
+
+      // Add notifications for seller and buyer
       await addDoc(collection(db, 'notifications'), {
         userId: product.userId,
         dateCreated: serverTimestamp(),
-        details: "New pending order",
+        details: "Product sold",
         status: true,
-        title: `${product.title} has a pending order for ${product.price} Frw`,
+        title: `Your product ${product.title} has been sold for ${product.price} Frw`,
       });
 
-      // Add notification for buyer
       await addDoc(collection(db, 'notifications'), {
         userId: user.uid,
         dateCreated: serverTimestamp(),
-        details: "New pending order",
+        details: "Purchase successful",
         status: true,
-        title: `Your order for ${product.title} is pending. Pay ${product.price} Frw on delivery`,
+        title: `You have successfully purchased ${product.title} for ${product.price} Frw`,
       });
 
-      toast.success('Order placed successfully. Pay on delivery.', {
+      toast.success('Purchase successful!', {
         icon: '✅',
         duration: 3000,
       });
@@ -304,8 +358,8 @@ const ProductDetails: React.FC = () => {
         setProduct({ id: updatedProductSnap.id, ...updatedProductSnap.data() } as Ad);
       }
     } catch (error) {
-      console.error('Error processing order:', error);
-      toast.error('Failed to place order. Please try again.', {
+      console.error('Error processing purchase:', error);
+      toast.error('Failed to complete purchase. Please try again.', {
         icon: '❌',
         duration: 3000,
       });
@@ -434,7 +488,8 @@ const ProductDetails: React.FC = () => {
               ) : (
                 <button
                   onClick={handleBuyNow}
-                  className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors flex-grow"
+                  disabled={insufficientFunds}
+                  className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors flex-grow disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CreditCard size={20} className="mr-2" />
                   Buy Now
@@ -455,6 +510,9 @@ const ProductDetails: React.FC = () => {
                 <Flag size={20} />
               </button>
             </div>
+            {insufficientFunds && (
+              <p className="text-red-500 text-sm mt-2">Insufficient funds in your wallet. Please add money to your wallet before making a purchase.</p>
+            )}
             {seller && (
               <div className="bg-gray-100 p-4 rounded-lg">
                 <h2 className="text-lg font-semibold mb-2">Seller Information</h2>
@@ -741,4 +799,4 @@ const ProductDetails: React.FC = () => {
   );
 };
 
-export default ProductDetails;
+export default ProductDetailsWrapper;
