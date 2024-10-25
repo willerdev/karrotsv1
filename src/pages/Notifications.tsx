@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, Carrot, X } from 'lucide-react';
-import { collection, query, orderBy, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, doc, updateDoc, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -26,7 +26,11 @@ const Notifications = () => {
 
     try {
       const notificationsRef = collection(db, 'notifications');
-      const q = query(notificationsRef, orderBy('dateCreated', 'desc'));
+      const q = query(
+        notificationsRef,
+        where('userId', '==', user.uid),
+        orderBy('dateCreated', 'desc')
+      );
       const querySnapshot = await getDocs(q);
       
       const fetchedNotifications: Notification[] = querySnapshot.docs.map(doc => ({
