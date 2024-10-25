@@ -350,8 +350,8 @@ const ProductDetails: React.FC = () => {
           const sellerWalletSnap = await transaction.get(sellerWalletRef);
 
           // Log wallet snapshots
-          console.log('Buyer wallet exists:', walletSnap.exists());
-          console.log('Seller wallet exists:', sellerWalletSnap.exists());
+          // console.log('Buyer wallet exists:', walletSnap.exists());
+          // console.log('Seller wallet exists:', sellerWalletSnap.exists());
 
           if (!walletSnap.exists()) {
             throw new Error('Buyer wallet not found');

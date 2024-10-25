@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getuserAds, updateAdStatus } from '../services/adService';
 import { Ad } from '../types/Ad';
 import LoadingScreen from '../components/LoadingScreen';
-import { Eye, EyeOff, Check, Search } from 'lucide-react';
+import { Eye, EyeOff, Check, Search, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase'; // Add this import
@@ -14,13 +14,16 @@ const MyAds: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingAd, setEditingAd] = useState<Ad | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const { user } = useAuth();
 
   useEffect(() => {
     const fetchAds = async () => {
       if (!user) {
-        setError('User not authenticated');
+        setError('User not authenticated Reflesh the page');
         setLoading(false);
         return;
       }
@@ -69,6 +72,35 @@ const MyAds: React.FC = () => {
     setSearchTerm(e.target.value);
   };
 
+  const handleOpenEditModal = (ad: Ad) => {
+    setEditingAd(ad);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateAd = async (updatedAd: Ad) => {
+    setIsUpdating(true);
+    try {
+      const adRef = doc(db, 'ads', updatedAd.id);
+      const { id, ...updateData } = updatedAd;
+      await updateDoc(adRef, updateData);
+
+      // Update local state
+      setAds(prevAds =>
+        prevAds.map(ad =>
+          ad.id === updatedAd.id ? updatedAd : ad
+        )
+      );
+
+      setIsEditModalOpen(false);
+      setEditingAd(null);
+    } catch (err) {
+      console.error('Error updating ad:', err);
+      setError('Failed to update ad. Please try again.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   if (loading) return <LoadingScreen />;
   if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
 
@@ -113,8 +145,77 @@ const MyAds: React.FC = () => {
                   </button>
                 )}
               </div>
+              <button
+                onClick={() => handleOpenEditModal(ad)}
+                className="mt-2 w-full bg-orange-500 text-white py-1 px-2 rounded hover:bg-orange-600"
+              >
+                Edit
+              </button>
             </div>
           ))}
+        </div>
+      )}
+      {isEditModalOpen && editingAd && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">Edit Ad</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleUpdateAd(editingAd);
+            }}>
+              <input
+                type="text"
+                value={editingAd.title}
+                onChange={(e) => setEditingAd({...editingAd, title: e.target.value})}
+                className="w-full p-2 mb-4 border rounded"
+                placeholder="Title"
+              />
+              <textarea
+                value={editingAd.description}
+                onChange={(e) => setEditingAd({...editingAd, description: e.target.value})}
+                className="w-full p-2 mb-4 border rounded"
+                placeholder="Description"
+              />
+              <input
+                type="number"
+                value={editingAd.price}
+                onChange={(e) => setEditingAd({...editingAd, price: Number(e.target.value)})}
+                className="w-full p-2 mb-4 border rounded"
+                placeholder="Price"
+              />
+              <input
+                type="text"
+                value={editingAd.location}
+                onChange={(e) => setEditingAd({...editingAd, location: e.target.value})}
+                className="w-full p-2 mb-4 border rounded"
+                placeholder="Location"
+              />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="mr-2 px-4 py-2 bg-gray-300 rounded"
+                  disabled={isUpdating}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-orange-500 text-white rounded flex items-center"
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2" size={16} />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
