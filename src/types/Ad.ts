@@ -12,7 +12,7 @@ export interface Ad {
   location: string;
   createdAt: Date;
   updatedAt: Date;
-  status: 'active' | 'sold' | 'unavailable';
+  status: "active" | "sold" | "unavailable" | "underDeal" | "underClaim";
   views: number;
   savedBy: string[];
   isVip?: boolean;

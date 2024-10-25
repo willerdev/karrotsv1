@@ -37,6 +37,8 @@ const ProductDetails: React.FC = () => {
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
   const [paymentOptions, setPaymentOptions] = useState<string[]>([]);
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [notificationMethod, setNotificationMethod] = useState<'email' | 'sms' | 'system'>('system');
 
   // Add this animation variant
   const fadeIn = {
@@ -267,184 +269,84 @@ const ProductDetails: React.FC = () => {
   const handleBuyNow = async () => {
     if (!user || !product) return;
 
-    setIsPaymentModalOpen(true);
-    setPaymentMessage('Initializing payment...');
-
-    try {
-      const walletRef = doc(db, 'wallets', user.uid); // Updated table name
-      const walletSnap = await getDoc(walletRef);
-
-      if (walletSnap.exists()) {
-        const walletData = walletSnap.data();
-        const walletBalance = walletData.balance;
-
-        if (walletBalance >= product.price) {
-          setPaymentOptions(['Pay with Cash', 'Use Wallet']);
-        } else {
-          setPaymentOptions(['Pay with Cash']);
-          setPaymentMessage('Wallet amount insufficient');
-        }
-      } else {
-        setPaymentOptions(['Pay with Cash']);
-        setPaymentMessage('Wallet not found or Insufficient balance');
-      }
-    } catch (error) {
-      console.error('Error checking wallet:', error);
-      setPaymentMessage('Failed to initialize payment. Please try again.');
-    }
-  };
-
-  const handlePaymentOption = async (option: string) => {
-    if (!user || !product) return;
-
-    setIsPaymentProcessing(true);
-
     try {
       const adRef = doc(db, 'ads', product.id);
+      await updateDoc(adRef, {
+        status: 'underDeal',
+      });
 
-      if (option === 'Pay with Cash') {
-        // Update ad status to 'pending'
-        await updateDoc(adRef, {
-          status: 'pending',
-        });
+      // Add notification for seller
+      await addDoc(collection(db, 'notifications'), {
+        userId: product.userId,
+        dateCreated: serverTimestamp(),
+        details: "New pending order",
+        status: true,
+        title: `${product.title} has a pending order for ${product.price} Frw`,
+      });
 
-        // Add payment record
-        await addDoc(collection(db, 'paymentsList'), {
-          userId: user.uid,
-          adId: product.id,
-          amount: product.price,
-          method: 'Cash on Delivery',
-          status: 'pending',
-          createdAt: serverTimestamp(),
-        });
+      // Add notification for buyer
+      await addDoc(collection(db, 'notifications'), {
+        userId: user.uid,
+        dateCreated: serverTimestamp(),
+        details: "New pending order",
+        status: true,
+        title: `Your order for ${product.title} is pending. Pay ${product.price} Frw on delivery`,
+      });
 
-        // Add notification for seller
-        await addDoc(collection(db, 'notifications'), {
-          userId: product.userId,
-          dateCreated: serverTimestamp(),
-          details: "New pending order",
-          status: true,
-          title: `${product.title} has a pending order for ${product.price} Frw`,
-        });
+      toast.success('Order placed successfully. Pay on delivery.', {
+        icon: '✅',
+        duration: 3000,
+      });
 
-        // Add notification for buyer
-        await addDoc(collection(db, 'notifications'), {
-          userId: user.uid,
-          dateCreated: serverTimestamp(),
-          details: "New pending order",
-          status: true,
-          title: `Your order for ${product.title} is pending. Pay ${product.price} Frw on delivery`,
-        });
-
-        setPaymentMessage('Order placed successfully. Pay on delivery.');
-      } else if (option === 'Use Wallet') {
-        const walletRef = doc(db, 'wallets', user.uid);
-        const sellerWalletRef = doc(db, 'wallets', product.userId);
-
-        // Log wallet references
-        console.log('Buyer wallet ref:', walletRef.path);
-        console.log('Seller wallet ref:', sellerWalletRef.path);
-
-        await runTransaction(db, async (transaction) => {
-          const walletSnap = await transaction.get(walletRef);
-          const sellerWalletSnap = await transaction.get(sellerWalletRef);
-
-          // Log wallet snapshots
-          // console.log('Buyer wallet exists:', walletSnap.exists());
-          // console.log('Seller wallet exists:', sellerWalletSnap.exists());
-
-          if (!walletSnap.exists()) {
-            throw new Error('Buyer wallet not found');
-          }
-
-          // Create seller wallet if it doesn't exist
-          if (!sellerWalletSnap.exists()) {
-            console.log('Creating seller wallet');
-            transaction.set(sellerWalletRef, {
-              userId: product.userId, // Add userId field
-              balance: 0,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-            });
-          }
-
-          const walletData = walletSnap.data();
-          const walletBalance = walletData.balance;
-
-          // Log wallet balance
-          console.log('Buyer wallet balance:', walletBalance);
-
-          if (walletBalance >= product.price) {
-            // Update buyer's wallet
-            transaction.update(walletRef, {
-              balance: increment(-product.price),
-              updatedAt: serverTimestamp(),
-            });
-
-            // Update seller's wallet
-            transaction.update(sellerWalletRef, {
-              balance: increment(product.price),
-              updatedAt: serverTimestamp(),
-            });
-
-            // Update ad status
-            transaction.update(adRef, {
-              status: 'sold',
-            });
-
-            // Add payment record
-            transaction.set(doc(collection(db, 'paymentsList')), {
-              userId: user.uid,
-              adId: product.id,
-              amount: product.price,
-              method: 'Wallet',
-              status: 'completed',
-              createdAt: serverTimestamp(),
-            });
-
-            // Add notification for seller
-            transaction.set(doc(collection(db, 'notifications')), {
-              userId: product.userId,
-              dateCreated: serverTimestamp(),
-              details: "A new product sold",
-              status: true,
-              title: `${product.title} is sold for ${product.price} Frw`,
-            });
-
-            // Add notification for buyer
-            transaction.set(doc(collection(db, 'notifications')), {
-              userId: user.uid,
-              dateCreated: serverTimestamp(),
-              details: "A new product bought",
-              status: true,
-              title: `You bought ${product.title} for ${product.price} Frw`,
-            });
-
-            setPaymentMessage('Payment successful with wallet');
-          } else {
-            throw new Error('Insufficient wallet balance');
-          }
-        });
-      }
-
-      // Refresh product data after successful payment
+      // Refresh product data
       const updatedProductSnap = await getDoc(adRef);
       if (updatedProductSnap.exists()) {
         setProduct({ id: updatedProductSnap.id, ...updatedProductSnap.data() } as Ad);
       }
+    } catch (error) {
+      console.error('Error processing order:', error);
+      toast.error('Failed to place order. Please try again.', {
+        icon: '❌',
+        duration: 3000,
+      });
+    }
+  };
 
-    } catch (error: unknown) {
-      console.error('Error processing payment:', error);
-      setPaymentMessage(`Failed to process payment: ${(error as Error).message}`);
+  const handleNotifyMe = async () => {
+    if (!user || !product) return;
+
+    try {
+      const settingsRef = doc(db, 'settings', user.uid);
+      await setDoc(settingsRef, {
+        notificationMethod: notificationMethod,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+
+      toast.success('Notification preference saved successfully', {
+        icon: '✅',
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error saving notification preference:', error);
+      toast.error('Failed to save notification preference', {
+        icon: '❌',
+        duration: 3000,
+      });
     } finally {
-      setIsPaymentProcessing(false);
-      setTimeout(() => setIsPaymentModalOpen(false), 5000);
+      setIsNotificationModalOpen(false);
     }
   };
 
   // Add this function to check if the product is sold
   const isProductSold = () => {
     return product?.status === "sold";
+  };
+
+  // Add this function near your other handler functions
+  const handlePaymentOption = (option: string) => {
+    // Implement the logic for handling the payment option here
+    console.log(`Selected payment option: ${option}`);
+    // You might want to update state or perform other actions based on the selected option
   };
 
   if (loading) return <LoadingScreen />;
@@ -509,10 +411,13 @@ const ProductDetails: React.FC = () => {
               <p className="text-gray-700">{product.description}</p>
             </div>
             <div className="flex space-x-2 mb-4">
-              {isProductSold() ? (
-                <div className="bg-red-500 text-white px-4 py-2 rounded-lg flex items-center justify-center flex-grow">
-                  Product Sold
-                </div>
+              {product.status === 'underDeal' ? (
+                <button
+                  onClick={() => setIsNotificationModalOpen(true)}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors flex-grow"
+                >
+                  Notify me if not bought
+                </button>
               ) : product.negotiable ? (
                 <button
                   onClick={handleStartChat}
@@ -758,6 +663,72 @@ const ProductDetails: React.FC = () => {
                           {option}
                         </button>
                       ))}
+                    </div>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
+            </div>
+          </Dialog>
+        </Transition>
+
+        {product.status === 'underClaim' && (
+          <button
+            onClick={() => setIsNotificationModalOpen(true)}
+            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors"
+          >
+            Notify me if not bought
+          </button>
+        )}
+
+        {/* Notification Modal */}
+        <Transition appear show={isNotificationModalOpen} as={Fragment}>
+          <Dialog as="div" className="relative z-10" onClose={() => setIsNotificationModalOpen(false)}>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black bg-opacity-25" />
+            </Transition.Child>
+
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4 text-center">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-lg font-medium leading-6 text-gray-900 mb-4"
+                    >
+                      Choose Notification Method
+                    </Dialog.Title>
+                    <div className="mt-4">
+                      <select
+                        value={notificationMethod}
+                        onChange={(e) => setNotificationMethod(e.target.value as 'email' | 'sms' | 'system')}
+                        className="w-full p-2 border rounded mb-4"
+                      >
+                        <option value="email">Email</option>
+                        <option value="sms">SMS</option>
+                        <option value="system">System</option>
+                      </select>
+                      <button
+                        onClick={handleNotifyMe}
+                        className="w-full inline-flex justify-center rounded-md border border-transparent bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      >
+                        Save Preference
+                      </button>
                     </div>
                   </Dialog.Panel>
                 </Transition.Child>
