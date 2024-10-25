@@ -2,7 +2,7 @@ import React, { useState, useEffect, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MessageCircle, Flag, MapPin, Star, CheckCircle, CreditCard, Heart, Mail, Loader, Smartphone, Battery, Cpu, Award, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, getDoc, collection, getDocs, addDoc, updateDoc, arrayUnion, arrayRemove, setDoc, serverTimestamp, query, where, increment } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, addDoc, updateDoc, arrayUnion, arrayRemove, setDoc, serverTimestamp, query, where, increment, Timestamp, runTransaction } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Ad } from '../types/Ad';
 import { User } from '../types/User';
@@ -52,6 +52,9 @@ const ProductDetails: React.FC = () => {
         return;
       }
 
+      // Create an abort controller
+      const abortController = new AbortController();
+
       try {
         const productRef = doc(db, 'ads', id);
         const productSnap = await getDoc(productRef);
@@ -86,11 +89,20 @@ const ProductDetails: React.FC = () => {
           setError('Product not found');
         }
       } catch (err: any) {
-        console.error('Error fetching product:', err);
-        setError('Failed to load product details. Please try again.');
+        if (!abortController.signal.aborted) {
+          console.error('Error fetching product:', err);
+          setError('Failed to load product details. Please try again.');
+        }
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
+
+      // Return a cleanup function
+      return () => {
+        abortController.abort();
+      };
     };
 
     fetchProduct();
@@ -274,7 +286,7 @@ const ProductDetails: React.FC = () => {
         }
       } else {
         setPaymentOptions(['Pay with Cash']);
-        setPaymentMessage('Wallet not found');
+        setPaymentMessage('Wallet not found or Insufficient balance');
       }
     } catch (error) {
       console.error('Error checking wallet:', error);
@@ -288,47 +300,145 @@ const ProductDetails: React.FC = () => {
     setIsPaymentProcessing(true);
 
     try {
-      if (option === 'Pay on Delivery') {
+      const adRef = doc(db, 'ads', product.id);
+
+      if (option === 'Pay with Cash') {
+        // Update ad status to 'pending'
+        await updateDoc(adRef, {
+          status: 'pending',
+        });
+
+        // Add payment record
         await addDoc(collection(db, 'paymentsList'), {
           userId: user.uid,
           adId: product.id,
           amount: product.price,
           method: 'Cash on Delivery',
+          status: 'pending',
           createdAt: serverTimestamp(),
         });
-        setPaymentMessage('Payment will be processed on delivery');
+
+        // Add notification for seller
+        await addDoc(collection(db, 'notifications'), {
+          userId: product.userId,
+          dateCreated: serverTimestamp(),
+          details: "New pending order",
+          status: true,
+          title: `${product.title} has a pending order for ${product.price} Frw`,
+        });
+
+        // Add notification for buyer
+        await addDoc(collection(db, 'notifications'), {
+          userId: user.uid,
+          dateCreated: serverTimestamp(),
+          details: "New pending order",
+          status: true,
+          title: `Your order for ${product.title} is pending. Pay ${product.price} Frw on delivery`,
+        });
+
+        setPaymentMessage('Order placed successfully. Pay on delivery.');
       } else if (option === 'Use Wallet') {
         const walletRef = doc(db, 'wallets', user.uid);
-        const walletSnap = await getDoc(walletRef);
-        if (walletSnap.exists()) {
+        const sellerWalletRef = doc(db, 'wallets', product.userId);
+
+        // Log wallet references
+        console.log('Buyer wallet ref:', walletRef.path);
+        console.log('Seller wallet ref:', sellerWalletRef.path);
+
+        await runTransaction(db, async (transaction) => {
+          const walletSnap = await transaction.get(walletRef);
+          const sellerWalletSnap = await transaction.get(sellerWalletRef);
+
+          // Log wallet snapshots
+          console.log('Buyer wallet exists:', walletSnap.exists());
+          console.log('Seller wallet exists:', sellerWalletSnap.exists());
+
+          if (!walletSnap.exists()) {
+            throw new Error('Buyer wallet not found');
+          }
+
+          // Create seller wallet if it doesn't exist
+          if (!sellerWalletSnap.exists()) {
+            console.log('Creating seller wallet');
+            transaction.set(sellerWalletRef, {
+              userId: product.userId, // Add userId field
+              balance: 0,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            });
+          }
+
           const walletData = walletSnap.data();
           const walletBalance = walletData.balance;
 
+          // Log wallet balance
+          console.log('Buyer wallet balance:', walletBalance);
+
           if (walletBalance >= product.price) {
-            await updateDoc(walletRef, {
+            // Update buyer's wallet
+            transaction.update(walletRef, {
               balance: increment(-product.price),
+              updatedAt: serverTimestamp(),
             });
-            await addDoc(collection(db, 'paymentsList'), {
+
+            // Update seller's wallet
+            transaction.update(sellerWalletRef, {
+              balance: increment(product.price),
+              updatedAt: serverTimestamp(),
+            });
+
+            // Update ad status
+            transaction.update(adRef, {
+              status: 'sold',
+            });
+
+            // Add payment record
+            transaction.set(doc(collection(db, 'paymentsList')), {
               userId: user.uid,
               adId: product.id,
               amount: product.price,
               method: 'Wallet',
+              status: 'completed',
               createdAt: serverTimestamp(),
             });
+
+            // Add notification for seller
+            transaction.set(doc(collection(db, 'notifications')), {
+              userId: product.userId,
+              dateCreated: serverTimestamp(),
+              details: "A new product sold",
+              status: true,
+              title: `${product.title} is sold for ${product.price} Frw`,
+            });
+
+            // Add notification for buyer
+            transaction.set(doc(collection(db, 'notifications')), {
+              userId: user.uid,
+              dateCreated: serverTimestamp(),
+              details: "A new product bought",
+              status: true,
+              title: `You bought ${product.title} for ${product.price} Frw`,
+            });
+
             setPaymentMessage('Payment successful with wallet');
           } else {
-            setPaymentMessage('Insufficient wallet balance');
+            throw new Error('Insufficient wallet balance');
           }
-        } else {
-          setPaymentMessage('Wallet not found');
-        }
+        });
       }
-    } catch (error) {
+
+      // Refresh product data after successful payment
+      const updatedProductSnap = await getDoc(adRef);
+      if (updatedProductSnap.exists()) {
+        setProduct({ id: updatedProductSnap.id, ...updatedProductSnap.data() } as Ad);
+      }
+
+    } catch (error: unknown) {
       console.error('Error processing payment:', error);
-      setPaymentMessage('Failed to process payment. Please try again.');
+      setPaymentMessage(`Failed to process payment: ${(error as Error).message}`);
     } finally {
       setIsPaymentProcessing(false);
-      setTimeout(() => setIsPaymentModalOpen(false), 5000); // Dismiss modal after 5 seconds
+      setTimeout(() => setIsPaymentModalOpen(false), 5000);
     }
   };
 
@@ -636,21 +746,18 @@ const ProductDetails: React.FC = () => {
                       Payment Details
                     </Dialog.Title>
                     <div className="mt-4">
-                      {paymentMessage && <p>{paymentMessage}</p>}
+                      {paymentMessage && <p className='text-center text-orange-500 font-bold text-xl mb-4'>{paymentMessage}</p>}
                       {paymentOptions.map((option) => (
                         <button
                           key={option}
                           onClick={() => handlePaymentOption(option)}
-                          className="inline-flex justify-center rounded-md border border-transparent bg-green-100 px-4 py-2 text-sm font-medium text-orange-900 hover:bg-orange-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                          className="w-full mb-2 inline-flex justify-center rounded-md border border-transparent bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
                           disabled={isPaymentProcessing}
                         >
                           {isPaymentProcessing ? <Loader size={20} className="animate-spin mr-2" /> : null}
                           {option}
                         </button>
                       ))}
-                    
-                       
-                  
                     </div>
                   </Dialog.Panel>
                 </Transition.Child>

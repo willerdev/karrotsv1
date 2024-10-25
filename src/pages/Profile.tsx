@@ -36,7 +36,7 @@ const Profile = () => {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedItem[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editField, setEditField] = useState('');
-  const [imageError, setImageError] = useState(false);
+  const [imageError, setImageError] = useState(false);                                            
   const [showBanReasonModal, setShowBanReasonModal] = useState(false);
   const [banReasons, setBanReasons] = useState<BanReason[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -44,10 +44,11 @@ const Profile = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user) {
-        setError('User not authenticated');
+        setError('Reload this Page');
         setLoading(false);
+        navigate('/'); // Redirect to login page
         return;
-      }
+      }                                                                                                                                                                                                   
 
       try {
         const userRef = doc(db, 'users', user.uid);
