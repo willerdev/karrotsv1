@@ -49,8 +49,9 @@ import EarnWithKarrot from './pages/EarnWithKarrot';
 import DepositHistory from './pages/DepositHistory';
 import WithdrawHistory from './pages/WithdrawHistory';
 import Transactions from './pages/Transactions'; // Import the Transactions component
-
+import OrderTracking from './pages/OrderTracking';
 import NotFound from './pages/NotFound';
+import OrderConfirmation from './pages/OrderConfirmation';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -91,7 +92,9 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/press" element={<Press />} />
+              <Route path="/order-tracking" element={<OrderTracking />} />
               <Route path="/payment/:userPlanId" element={<Payment />} />
+              <Route path="/order-confirmation/:purchaseId" element={<OrderConfirmation />} />
               <Route path="/help" element={<Help />} />
               <Route path="/safety" element={<Safety />} />
               <Route path="/community" element={<Community />} />

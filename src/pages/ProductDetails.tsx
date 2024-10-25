@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
 import { useWallet } from '../contexts/WalletContext'; // Adjust the import path as needed
 import { WalletProvider } from '../contexts/WalletContext'; // Import the WalletProvider
-
+import DeliveryModal from '../components/DeliveryModal';
 const ProductDetailsWrapper: React.FC = () => {
   return (
     <WalletProvider>
@@ -49,9 +49,9 @@ const ProductDetails: React.FC = () => {
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [notificationMethod, setNotificationMethod] = useState<'email' | 'sms' | 'system'>('system');
-  const { walletBalance, updateWalletBalance } = useWallet(); // Add this line
+  const { walletBalance, updateWalletBalance, walletId } = useWallet(); // Add walletId here
   const [insufficientFunds, setInsufficientFunds] = useState(false);
-
+  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   // Add this animation variant
   const fadeIn = {
     hidden: { opacity: 0 },
@@ -281,55 +281,66 @@ const ProductDetails: React.FC = () => {
   const handleBuyNow = async () => {
     if (!user || !product) return;
 
-    console.log('Current wallet balance:', walletBalance);
-    console.log('Product price:', product.price);
-
-    if (walletBalance < product.price) {
-      setInsufficientFunds(true);
-      toast.error('Insufficient funds in your wallet', {
-        icon: '❌',
-        duration: 3000,
-      });
-      return;
-    }
-
     try {
       const adRef = doc(db, 'ads', product.id);
-      const userRef = doc(db, 'users', user.uid);
+      const userWalletRef = doc(db, 'wallets', user.uid);
+      const sellerWalletRef = doc(db, 'wallets', product.userId);
 
       await runTransaction(db, async (transaction) => {
-        const userDoc = await transaction.get(userRef);
-        if (!userDoc.exists()) {
-          throw new Error("User document does not exist!");
+        let userWalletDoc = await transaction.get(userWalletRef);
+        let sellerWalletDoc = await transaction.get(sellerWalletRef);
+
+        // Create buyer's wallet if it doesn't exist
+        if (!userWalletDoc.exists()) {
+          transaction.set(userWalletRef, { balance: 0 });
+          userWalletDoc = await transaction.get(userWalletRef);
         }
 
-        const userData = userDoc.data();
-        const currentBalance = userData.walletBalance || 0;
+        // Create seller's wallet if it doesn't exist
+        if (!sellerWalletDoc.exists()) {
+          transaction.set(sellerWalletRef, { balance: 0, releaseable: 0 });
+          sellerWalletDoc = await transaction.get(sellerWalletRef);
+        }
 
-        console.log('Database wallet balance:', currentBalance);
+        const userWalletData = userWalletDoc.data();
+        const sellerWalletData = sellerWalletDoc.data();
+        const currentBalance = userWalletData?.balance ?? 0;
+        const sellerReleaseable = sellerWalletData?.releaseable ?? 0;
 
         if (currentBalance < product.price) {
           throw new Error("Insufficient funds");
         }
 
-        transaction.update(userRef, {
-          walletBalance: currentBalance - product.price
+        // Update buyer's wallet
+        transaction.update(userWalletRef, {
+          balance: currentBalance - product.price
         });
 
+        // Update ad status
         transaction.update(adRef, {
           status: 'sold',
         });
 
-        // Add transaction to seller's wallet
-        const sellerRef = doc(db, 'users', product.userId);
-        const sellerDoc = await transaction.get(sellerRef);
-        if (sellerDoc.exists()) {
-          const sellerData = sellerDoc.data();
-          const sellerBalance = sellerData.walletBalance || 0;
-          transaction.update(sellerRef, {
-            walletBalance: sellerBalance + product.price
-          });
-        }
+        // Update seller's wallet
+        transaction.update(sellerWalletRef, {
+          releaseable: sellerReleaseable + product.price,
+        });
+
+        // Create a new purchase record
+        const purchaseRef = collection(db, 'purchases');
+        const newPurchaseRef = doc(purchaseRef);
+        const newPurchase = {
+          productId: product.id,
+          productTitle: product.title,
+          buyerId: user.uid,
+          sellerId: product.userId,
+          price: product.price,
+          paymentMethod: 'wallet',
+          status: 'pending',
+          purchaseDate: serverTimestamp(),
+          lastUpdated: serverTimestamp(),
+        };
+        transaction.set(newPurchaseRef, newPurchase);
       });
 
       // Update local wallet balance
@@ -493,14 +504,17 @@ const ProductDetails: React.FC = () => {
                   {isOfferLoading ? 'Processing...' : 'Make Offer'}
                 </button>
               ) : (
-                <button
+                <motion.button
                   onClick={handleBuyNow}
-                  disabled={insufficientFunds}
+                  disabled={insufficientFunds || isProductSold()}
                   className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors flex-grow disabled:opacity-50 disabled:cursor-not-allowed"
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
                   <CreditCard size={20} className="mr-2" />
-                  Buy Now
-                </button>
+                  {isProductSold() ? 'Sold Out' : 'Buy Now'}
+                </motion.button>
               )}
               <button
                 onClick={handleSaveAd}
@@ -518,7 +532,12 @@ const ProductDetails: React.FC = () => {
               </button>
             </div>
             {insufficientFunds && (
-              <p className="text-red-500 text-sm mt-2">Insufficient funds in your wallet. Please add money to your wallet before making a purchase.</p>
+              <div className="text-red-500 text-sm mt-2">
+                <p>Insufficient funds in your wallet. Please add money to your wallet before making a purchase.</p>
+                <p>Current Balance: {walletBalance.toLocaleString()} Frw</p>
+                {/* <p>Wallet ID: {walletId}</p>
+                <p>User ID: {user?.uid}</p> */}
+              </div>
             )}
             {seller && (
               <div className="bg-gray-100 p-4 rounded-lg">

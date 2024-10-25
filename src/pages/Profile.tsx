@@ -296,6 +296,10 @@ const Profile = () => {
             <span>Referral Program</span>
           </Link>
         </div>
+
+        <Link to="/order-tracking" className="text-blue-500 hover:underline mt-2 block">
+          Track Orders
+        </Link>
       </div>
 
       <Modal
