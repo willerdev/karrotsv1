@@ -55,6 +55,8 @@ import OrderConfirmation from './pages/OrderConfirmation';
 import SettingsPage from './pages/SettingsPage';
 import FreeUpSpacePage from './pages/FreeUpSpacePage';
 
+// Remove the following line:
+import AIChat from './pages/assistant';
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
 
@@ -85,7 +87,7 @@ function App() {
               <Route path="/post-ad" element={<ProtectedRoute><PostAd /></ProtectedRoute>} />
               <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
               <Route path="/profile" element={<Profile />} />
-
+              <Route path="/assistant" element={<AIChat />} />
               <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><SavedAds /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />

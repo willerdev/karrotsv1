@@ -82,9 +82,13 @@ const Home = () => {
 
   return (
     <div className="flex flex-col w-full">
+      
       <style>{globalStyles}</style>
-      <div className="md:flex-shrink-0">
+      <div className="md:flex-shrink-0 ">
         <SearchBar />
+        <div className="md:hidden mb-8">
+          <CategoryGrid />
+        </div>
       </div>
 
       <div className="flex-grow md:overflow-hidden">
