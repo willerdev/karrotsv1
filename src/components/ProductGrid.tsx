@@ -104,7 +104,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
  
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
       {ads.map((ad) => (
         <Link to={`/product/${ad.id}`} key={ad.id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
           <div className="relative">
@@ -132,10 +132,10 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
           </div>
           <div className="p-2 flex-grow flex flex-col justify-between">
             <div>
-              <h3 className="font-semibold text-xs mb-1 truncate">{ad.title}</h3>
+              <h1 className="font-semibold text-xl mb-1 truncate">{ad.title}</h1>
               <p className="text-orange-500 font-bold text-sm">{ad.price.toLocaleString()} Frw </p>
             </div>
-            <div>
+            {/* <div>
               <p className="bg-gray-100 text-gray-700 text-xs p-1 rounded-md mb-1 flex items-center">
                 <MapPin size={12} className="mr-1" /> 
                 <span className="font-semibold mr-2">{ad.location}</span>
@@ -145,7 +145,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
               <p className="text-orange-500 text-xs truncate flex items-center">
                 <User size={16} className="mr-1" /> {sellersData[ad.userId] || 'Loading...'}
               </p>
-            </div>
+            </div> */}
           </div>
         </Link>
       ))}

@@ -2,7 +2,7 @@ import React, { useState, useEffect, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MessageCircle, Flag, MapPin, Star, CheckCircle, CreditCard, Heart, Mail, Loader, Smartphone, Battery, Cpu, Award, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { doc, getDoc, collection, getDocs, addDoc, updateDoc, arrayUnion, arrayRemove, setDoc, serverTimestamp, query, where, increment, Timestamp, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, addDoc, updateDoc, arrayUnion, arrayRemove, setDoc, serverTimestamp, query, where, increment, Timestamp, runTransaction, deleteDoc, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Ad } from '../types/Ad';
 import { User } from '../types/User';
@@ -13,6 +13,7 @@ import { Toaster, toast } from 'react-hot-toast';
 import { useWallet } from '../contexts/WalletContext'; // Adjust the import path as needed
 import { WalletProvider } from '../contexts/WalletContext'; // Import the WalletProvider
 import DeliveryModal from '../components/DeliveryModal';
+import { Link } from 'react-router-dom';
 const ProductDetailsWrapper: React.FC = () => {
   return (
     <WalletProvider>
@@ -52,6 +53,8 @@ const ProductDetails: React.FC = () => {
   const { walletBalance, updateWalletBalance, walletId } = useWallet(); // Add walletId here
   const [insufficientFunds, setInsufficientFunds] = useState(false);
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [similarProducts, setSimilarProducts] = useState<Ad[]>([]);
   // Add this animation variant
   const fadeIn = {
     hidden: { opacity: 0 },
@@ -121,6 +124,35 @@ const ProductDetails: React.FC = () => {
 
     fetchProduct();
   }, [id, user]);
+
+  useEffect(() => {
+    // Check if the user is following the seller
+    const checkFollowStatus = async () => {
+      if (user && seller) {
+        const followersRef = collection(db, 'followers');
+        const q = query(
+          followersRef,
+          where('followerId', '==', user.uid),
+          where('userId', '==', seller.id)
+        );
+        const querySnapshot = await getDocs(q);
+        setIsFollowing(!querySnapshot.empty);
+      }
+    };
+
+    checkFollowStatus();
+
+    // Fetch any products as similar products
+    const fetchSimilarProducts = async () => {
+      const adsRef = collection(db, 'ads');
+      const q = query(adsRef, limit(10));
+      const querySnapshot = await getDocs(q);
+      const similarProductsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
+      setSimilarProducts(similarProductsData);
+    };
+
+    fetchSimilarProducts();
+  }, [id, user, seller]);
 
   const handleSaveAd = async () => {
     if (!user || !product) return;
@@ -409,6 +441,41 @@ const ProductDetails: React.FC = () => {
     }
   };
 
+  const handleFollowSeller = async () => {
+    if (!user || !seller) return;
+
+    try {
+      if (isFollowing) {
+        // Unfollow logic
+        const followersRef = collection(db, 'followers');
+        const q = query(
+          followersRef,
+          where('followerId', '==', user.uid),
+          where('userId', '==', seller.id)
+        );
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach(async (doc) => {
+          await deleteDoc(doc.ref);
+        });
+        setIsFollowing(false);
+        toast.success('Unfollowed seller successfully');
+      } else {
+        // Follow logic
+        const followersRef = collection(db, 'followers');
+        await addDoc(followersRef, {
+          followerId: user.uid,
+          userId: seller.id,
+          createdAt: serverTimestamp(),
+        });
+        setIsFollowing(true);
+        toast.success('Following seller successfully');
+      }
+    } catch (error) {
+      console.error('Error following/unfollowing seller:', error);
+      toast.error('Failed to follow/unfollow seller. Please try again.');
+    }
+  };
+
   // Add this function to check if the product is sold
   const isProductSold = () => {
     return product?.status === "sold";
@@ -556,6 +623,16 @@ const ProductDetails: React.FC = () => {
                     Verified Seller
                   </span>
                 )}
+                <button
+                  onClick={handleFollowSeller}
+                  className={`mt-2 px-4 py-2 rounded-lg ${
+                    isFollowing
+                      ? 'bg-gray-200 text-gray-700'
+                      : 'bg-orange-500 text-white'
+                  } hover:bg-orange-600 transition-colors`}
+                >
+                  {isFollowing ? 'Unfollow Seller' : 'Follow Seller'}
+                </button>
               </div>
             )}
           </motion.div>
@@ -820,6 +897,49 @@ const ProductDetails: React.FC = () => {
             </div>
           </Dialog>
         </Transition>
+
+        {/* Safety Tips */}
+        <motion.div 
+          className="mt-4 bg-blue-50 p-4 rounded-lg"
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.8 }}
+        >
+          <h2 className="text-xl font-bold mb-4">Safety Tips</h2>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>Avoid paying in advance, even for delivery</li>
+            <li>Meet with the seller at a safe public place</li>
+            <li>Inspect the item and ensure it's exactly what you want</li>
+            <li>Make sure that the packed item is the one you've inspected</li>
+            <li>Only pay if you're satisfied</li>
+          </ul>
+        </motion.div>
+
+        {/* Similar Products */}
+        <motion.div 
+          className="mt-8"
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 1 }}
+        >
+          <h2 className="text-xl font-bold mb-4">Similar Products</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {similarProducts.map((similarProduct) => (
+              <div key={similarProduct.id} className="border rounded-lg p-4">
+                <img 
+                  src={similarProduct.images[0]} 
+                  alt={similarProduct.title} 
+                  className="w-full h-40 object-cover mb-2 rounded"
+                />
+                <h3 className="font-semibold">{similarProduct.title}</h3>
+                <p className="text-orange-500 font-bold">{similarProduct.price.toLocaleString()} Frw</p>
+                <Link to={`/product/${similarProduct.id}`} className="mt-2 block text-center bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition-colors">
+                  View Details
+                </Link>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </motion.div>
     </>
   );
