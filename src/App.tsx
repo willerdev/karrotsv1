@@ -52,6 +52,8 @@ import Transactions from './pages/Transactions'; // Import the Transactions comp
 import OrderTracking from './pages/OrderTracking';
 import NotFound from './pages/NotFound';
 import OrderConfirmation from './pages/OrderConfirmation';
+import SettingsPage from './pages/SettingsPage';
+import FreeUpSpacePage from './pages/FreeUpSpacePage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -83,13 +85,16 @@ function App() {
               <Route path="/post-ad" element={<ProtectedRoute><PostAd /></ProtectedRoute>} />
               <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/edit-profile/:section" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+
+              <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><SavedAds /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
               <Route path="/delivery-services" element={<DeliveryServices />} />
               <Route path="/product/:id" element={<ProductDetails />} />
+              <Route path="/free-up-space" element={<FreeUpSpacePage />} />
               <Route path="/category/:categoryName" element={<CategoryPage />} />
               <Route path="/about" element={<About />} />
+              <Route path="/settings" element={<SettingsPage />} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/press" element={<Press />} />
               <Route path="/order-tracking" element={<OrderTracking />} />

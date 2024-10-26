@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { postAd } from '../services/adService';
 import ImageUpload from '../components/ImageUpload';
-import { AlertCircle, X, ChevronDown } from 'lucide-react';
+import { AlertCircle, X, ChevronDown, MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -12,10 +12,19 @@ import { Ad } from '../types/Ad';
 
 import Loading from '../components/LoadingScreen';
 import { motion } from 'framer-motion';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+
+const masterCategories = [
+  { name: 'Normal Ads', color: '#4CAF50' },
+  { name: 'AirBnb', color: '#FF5A5F' },
+  { name: 'Services', color: '#2196F3' },
+  { name: 'Rentals', color: '#FFC107' },
+];
 
 const PostAd: React.FC = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [selectedMasterCategory, setSelectedMasterCategory] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -27,6 +36,18 @@ const PostAd: React.FC = () => {
   const [images, setImages] = useState<File[]>([]);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [mapCenter, setMapCenter] = useState({ lat: -1.9441, lng: 30.0619 }); // Kigali coordinates
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const [checkInDate, setCheckInDate] = useState('');
+  const [checkOutDate, setCheckOutDate] = useState('');
+  const [serviceType, setServiceType] = useState('');
+  const [rentalPeriod, setRentalPeriod] = useState('');
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: "AIzaSyCIRjn9GL-E-eKxxsrgq2jiT0ux0tRNFjM"
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -73,7 +94,7 @@ const PostAd: React.FC = () => {
     try {
       const uploadedImageUrls = await uploadImages();
 
-      const adData: Omit<Ad, "id" | "status" | "createdAt" | "updatedAt" | "views" | "savedBy"> = {
+      const adData: Partial<Omit<Ad, "id" | "status" | "createdAt" | "updatedAt" | "views" | "savedBy">> = {
         title,
         description,
         price: Number(price),
@@ -84,18 +105,11 @@ const PostAd: React.FC = () => {
         images: uploadedImageUrls,
         location,
         userId: user.uid,
-        color: '',
-        brand: '',
-        model: '',
-        internalStorage: null,
-        ram: null,
-        screenSize: null,
-        secondCondition: "",
-        network: '',
-        sim: '',
-        wifi: false,
-        // Add other missing properties with default values (null or empty string)
-        // ...
+        masterCategory: selectedMasterCategory,
+        checkInDate: checkInDate || null,
+        checkOutDate: checkOutDate || null,
+        serviceType: serviceType || null,
+        rentalPeriod: rentalPeriod || null,
       };
 
       const postedAd = await postAd(adData);
@@ -109,10 +123,102 @@ const PostAd: React.FC = () => {
     }
   };
 
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedCategory = e.target.value;
-    setCategory(selectedCategory);
-    setSubcategory('');
+  const renderMasterCategoryButtons = () => (
+    <div className="grid grid-cols-2 gap-4 mb-6">
+      {masterCategories.map((cat) => (
+        <button
+          key={cat.name}
+          onClick={() => setSelectedMasterCategory(cat.name)}
+          className="h-32 rounded-lg flex items-center justify-center text-white font-bold text-xl transition-transform transform hover:scale-105"
+          style={{ backgroundColor: cat.color }}
+        >
+          {cat.name}
+        </button>
+      ))}
+    </div>
+  );
+
+  const renderAdditionalFields = () => {
+    switch (selectedMasterCategory) {
+      case 'AirBnb':
+        return (
+          <>
+            <div>
+              <label htmlFor="checkInDate" className="block mb-2 font-semibold text-gray-700">Check-in Date</label>
+              <input
+                type="date"
+                id="checkInDate"
+                value={checkInDate}
+                onChange={(e) => setCheckInDate(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="checkOutDate" className="block mb-2 font-semibold text-gray-700">Check-out Date</label>
+              <input
+                type="date"
+                id="checkOutDate"
+                value={checkOutDate}
+                onChange={(e) => setCheckOutDate(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                required
+              />
+            </div>
+          </>
+        );
+      case 'Services':
+        return (
+          <div>
+            <label htmlFor="serviceType" className="block mb-2 font-semibold text-gray-700">Service Type</label>
+            <input
+              type="text"
+              id="serviceType"
+              value={serviceType}
+              onChange={(e) => setServiceType(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+              required
+            />
+          </div>
+        );
+      case 'Rentals':
+        return (
+          <div>
+            <label htmlFor="rentalPeriod" className="block mb-2 font-semibold text-gray-700">Rental Period</label>
+            <input
+              type="text"
+              id="rentalPeriod"
+              value={rentalPeriod}
+              onChange={(e) => setRentalPeriod(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+              required
+            />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const onMapClick = (e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+      setMapCenter({ lat, lng });
+      
+      // Get address from coordinates
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results?.[0]) {
+          setLocation(results[0].formatted_address);
+          setShowMap(false);
+        }
+      });
+    }
+  };
+
+  const onMapLoad = (map: google.maps.Map) => {
+    mapRef.current = map;
   };
 
   if (loading) {
@@ -151,163 +257,177 @@ const PostAd: React.FC = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.5 }}
       >
-        <div>
-          <label htmlFor="title" className="block mb-2 font-semibold text-gray-700">Title</label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="description" className="block mb-2 font-semibold text-gray-700">Description</label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-            rows={4}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="price" className="block mb-2 font-semibold text-gray-700">Price (Frw)</label>
-          <input
-            type="number"
-            id="price"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="category" className="block mb-2 font-semibold text-gray-700">Category</label>
-          <div className="relative">
-            <select
-              id="category"
-              value={category}
-              onChange={handleCategoryChange}
-              className="w-full p-3 border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-              required
-            >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat.name} value={cat.name}>{cat.name}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          </div>
-        </div>
-        {category && (
-          <div>
-            <label htmlFor="subcategory" className="block mb-2 font-semibold text-gray-700">Subcategory</label>
-            <select
-              id="subcategory"
-              value={subcategory}
-              onChange={(e) => setSubcategory(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-              required
-            >
-              <option value="">Select a subcategory</option>
-              {categories.find(cat => cat.name === category)?.subcategories.map((subcat) => (
-                <option key={subcat} value={subcat}>{subcat}</option>
-              ))}
-            </select>
-          </div>
-        )}
-        <div>
-          <label htmlFor="condition" className="block mb-2 font-semibold text-gray-700">Condition</label>
-          <select
-            id="condition"
-            value={condition}
-            onChange={(e) => setCondition(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-            required
-          >
-            <option value="new">New</option>
-            <option value="refurbished">Refurbished</option>
-            <option value="used_s_class">Used S Class</option>
-            <option value="used_a_class">Used A Class</option>
-            <option value="used_b_grade">Used B Grade</option>
-            <option value="used_cracked">Used Cracked</option>
-            <option value="for_parts">For Parts</option>
-          </select>
-        </div>
-        <div>
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={negotiable}
-              onChange={(e) => setNegotiable(e.target.checked)}
-              className="mr-2"
-            />
-            Price is negotiable
-          </label>
-        </div>
-        <div>
-          <label htmlFor="location" className="block mb-2 font-semibold text-gray-700">Location</label>
-          <input
-            type="text"
-            id="location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
-            required
-          />
-        </div>
-        <ImageUpload onImageUpload={handleImageUpload} />
-        <motion.div 
-          className="flex flex-wrap gap-3 mb-4"
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: {
-                staggerChildren: 0.1
-              }
-            }
-          }}
-        >
-          {images.map((image, index) => (
+        {!selectedMasterCategory && renderMasterCategoryButtons()}
+        
+        {selectedMasterCategory && (
+          <>
+            <div>
+              <label htmlFor="title" className="block mb-2 font-semibold text-gray-700">Title</label>
+              <input
+                type="text"
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="description" className="block mb-2 font-semibold text-gray-700">Description</label>
+              <textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                rows={4}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="price" className="block mb-2 font-semibold text-gray-700">Price (Frw)</label>
+              <input
+                type="number"
+                id="price"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                required
+              />
+            </div>
+            
+            {renderAdditionalFields()}
+
+            <div>
+              <label htmlFor="category" className="block mb-2 font-semibold text-gray-700">Category</label>
+              <select
+                id="category"
+                value={category}
+                onChange={(e) => {
+                  setCategory(e.target.value);
+                  setSubcategory('');
+                }}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                required
+              >
+                <option value="">Select a category</option>
+                {categories.map((cat) => (
+                  <option key={cat.name} value={cat.name}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+            {category && (
+              <div>
+                <label htmlFor="subcategory" className="block mb-2 font-semibold text-gray-700">Subcategory</label>
+                <select
+                  id="subcategory"
+                  value={subcategory}
+                  onChange={(e) => setSubcategory(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                  required
+                >
+                  <option value="">Select a subcategory</option>
+                  {categories.find(cat => cat.name === category)?.subcategories.map((subcat) => (
+                    <option key={subcat} value={subcat}>{subcat}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="location" className="block mb-2 font-semibold text-gray-700">Location</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  id="location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                  required
+                  onClick={() => setShowMap(true)}
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  onClick={() => setShowMap(true)}
+                >
+                  <MapPin size={20} />
+                </button>
+              </div>
+            </div>
+            <ImageUpload onImageUpload={handleImageUpload} />
             <motion.div 
-              key={index} 
-              className="relative"
+              className="flex flex-wrap gap-3 mb-4"
+              initial="hidden"
+              animate="visible"
               variants={{
-                hidden: { opacity: 0, scale: 0.8 },
-                visible: { opacity: 1, scale: 1 }
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.1
+                  }
+                }
               }}
             >
-              <img
-                src={URL.createObjectURL(image)}
-                alt={`Uploaded ${index + 1}`}
-                className="w-24 h-24 object-cover rounded-lg shadow-md"
-              />
-              <button
-                type="button"
-                onClick={() => removeImage(index)}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition"
-              >
-                <X size={16} />
-              </button>
+              {images.map((image, index) => (
+                <motion.div 
+                  key={index} 
+                  className="relative"
+                  variants={{
+                    hidden: { opacity: 0, scale: 0.8 },
+                    visible: { opacity: 1, scale: 1 }
+                  }}
+                >
+                  <img
+                    src={URL.createObjectURL(image)}
+                    alt={`Uploaded ${index + 1}`}
+                    className="w-24 h-24 object-cover rounded-lg shadow-md"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition"
+                  >
+                    <X size={16} />
+                  </button>
+                </motion.div>
+              ))}
             </motion.div>
-          ))}
-        </motion.div>
-        <motion.button
-          type="submit"
-          className="w-full bg-orange-500 text-white p-3 rounded-lg font-semibold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
-          disabled={isSubmitting}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          {isSubmitting ? 'Posting...' : 'Post Ad'}
-        </motion.button>
+            <motion.button
+              type="submit"
+              className="w-full bg-orange-500 text-white p-3 rounded-lg font-semibold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              disabled={isSubmitting}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {isSubmitting ? 'Posting...' : 'Post Ad'}
+            </motion.button>
+          </>
+        )}
       </motion.form>
+
+      {showMap && isLoaded && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded-lg w-full max-w-2xl">
+            <h3 className="text-lg font-semibold mb-2">Select Location</h3>
+            <GoogleMap
+              mapContainerStyle={{ width: '100%', height: '400px' }}
+              center={mapCenter}
+              zoom={10}
+              onClick={onMapClick}
+              onLoad={onMapLoad}
+            >
+              <Marker position={mapCenter} />
+            </GoogleMap>
+            <button
+              className="mt-4 bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+              onClick={() => setShowMap(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };

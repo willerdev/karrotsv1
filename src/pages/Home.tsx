@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, CSSProperties } from 'react';
 import { collection, getDocs, query, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Ad } from '../types/Ad';
@@ -9,6 +9,27 @@ import SearchBar from '../components/SearchBar';
 import LoadingScreen from '../components/LoadingScreen';
 import { Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+const scrollbarStyle: CSSProperties = {
+  overflowY: 'auto',
+  scrollbarWidth: 'thin',
+  scrollbarColor: '#f97316 #f1f5f9',
+};
+
+// Add this new constant for the global styles
+const globalStyles = `
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background-color: #f1f5f9;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: #f97316;
+    border-radius: 20px;
+    border: 3px solid #f1f5f9;
+  }
+`;
 
 const Home = () => {
   const [showLocationPopup, setShowLocationPopup] = useState(false);
@@ -61,18 +82,17 @@ const Home = () => {
 
   return (
     <div className="flex flex-col w-full">
-      <SearchBar />
+      <style>{globalStyles}</style>
+      <div className="md:flex-shrink-0">
+        <SearchBar />
+      </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="md:hidden mb-8">
-          <CategoryGrid />
-        </div>
-
-        <div className="flex flex-col md:flex-row">
-          <div className="md:w-1/4 pr-4 mb-4 md:mb-0 hidden md:block">
+      <div className="flex-grow md:overflow-hidden">
+        <div className="container mx-auto px-4 py-8 md:h-full flex flex-col md:flex-row">
+          <div className="md:w-1/4 pr-4 mb-4 md:mb-0 hidden md:block md:flex-shrink-0">
             <CategoryList />
           </div>
-          <div className="md:w-3/4">
+          <div className="md:w-3/4" style={scrollbarStyle}>
             <div className="mb-8">
               <img 
                 src="https://i0.wp.com/blog.karrotmarket.com/wp-content/uploads/2024/10/why-fast-shipping-matters-in-local-marketplaces.webp?fit=2048%2C1024&ssl=1" 

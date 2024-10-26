@@ -64,9 +64,8 @@ const ProductDetails: React.FC = () => {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      if (!id) {
-        setError('No product ID provided');
-        setLoading(false);
+      if (!id || !user) {
+        setError('No product ID provided or user not logged in');
         return;
       }
 
@@ -81,6 +80,9 @@ const ProductDetails: React.FC = () => {
           const productData = { id: productSnap.id, ...productSnap.data() } as Ad;
           setProduct(productData);
           setIsSaved(user ? productData.savedBy?.includes(user.uid) : false);
+
+          // Update or create adview record
+          await updateAdView(id, user.uid);
 
           // Fetch seller information
           const sellerRef = doc(db, 'users', productData.userId);
@@ -125,6 +127,33 @@ const ProductDetails: React.FC = () => {
 
     fetchProduct();
   }, [id, user]);
+
+  const updateAdView = async (adId: string, userId: string) => {
+    try {
+      const adViewRef = doc(db, 'adviews', `${adId}_${userId}`);
+      const adViewSnap = await getDoc(adViewRef);
+
+      if (adViewSnap.exists()) {
+        // Update existing record
+        await updateDoc(adViewRef, {
+          viewCount: increment(1),
+          lastViewed: serverTimestamp()
+        });
+      } else {
+        // Create new record
+        await setDoc(adViewRef, {
+          adId,
+          userId,
+          viewCount: 1,
+          firstViewed: serverTimestamp(),
+          lastViewed: serverTimestamp()
+        });
+      }
+    } catch (error) {
+      console.error('Error updating ad view:', error);
+      // Note: We're not setting an error state here to avoid disrupting the user experience
+    }
+  };
 
   useEffect(() => {
     // Check if the user is following the seller
@@ -524,8 +553,55 @@ const ProductDetails: React.FC = () => {
     }
   };
 
+  const handleDeleteAd = async (e: React.MouseEvent, adId: string) => {
+    e.preventDefault();
+    if (!user) return;
+
+    try {
+      await deleteDoc(doc(db, 'ads', adId));
+      toast.success('Ad deleted successfully');
+      // You might want to update the local state or refetch the ads here
+    } catch (error) {
+      console.error('Error deleting ad:', error);
+      toast.error('Failed to delete ad. Please try again.');
+    }
+  };
+
+  const handleMarkAsSold = async (e: React.MouseEvent, adId: string) => {
+    e.preventDefault();
+    if (!user) return;
+
+    try {
+      await updateDoc(doc(db, 'ads', adId), { status: 'sold' });
+      toast.success('Ad marked as sold');
+      // Update local state or refetch ads here
+    } catch (error) {
+      console.error('Error marking ad as sold:', error);
+      toast.error('Failed to mark ad as sold. Please try again.');
+    }
+  };
+
   if (loading) return <LoadingScreen />;
-  if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
+  if (error) return (
+    <div className="text-center py-8">
+      <p className="text-red-500 mb-4">{error}</p>
+      <p className="mb-4">Please try one of the following:</p>
+      <div className="space-x-4">
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+        >
+          Refresh Page
+        </button>
+        <Link
+          to="/"
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+        >
+          Go to Home Page
+        </Link>
+      </div>
+    </div>
+  );
   if (!product) return <div className="text-center py-8">Product not found</div>;
 
   return (
@@ -592,19 +668,6 @@ const ProductDetails: React.FC = () => {
                   className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors flex-grow"
                 >
                   Notify me if not bought
-                </button>
-              ) : product.negotiable ? (
-                <button
-                  onClick={handleStartChat}
-                  disabled={isOfferLoading}
-                  className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-orange-600 transition-colors flex-grow disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isOfferLoading ? (
-                    <Loader size={20} className="animate-spin mr-2" />
-                  ) : (
-                    <MessageCircle size={20} className="mr-2" />
-                  )}
-                  {isOfferLoading ? 'Processing...' : 'Make Offer'}
                 </button>
               ) : (
                 <motion.button

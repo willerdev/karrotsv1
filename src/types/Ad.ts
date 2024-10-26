@@ -45,4 +45,9 @@ export interface Ad {
   weight: string;
   material: string | null;
   energyEfficiencyRating: number | null;
+  masterCategory: string;
+  checkInDate?: string | null;
+  checkOutDate?: string | null;
+  serviceType?: string | null;
+  rentalPeriod?: string | null;
 }

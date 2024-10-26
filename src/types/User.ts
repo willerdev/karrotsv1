@@ -19,4 +19,11 @@ export interface User {
   savedAds: string[];  // Array of ad IDs that the user has saved
   postedAds: string[];  // Array of ad IDs that the user has posted
   isVerified?: boolean;
+  dateOfBirth?: string;
+  country?: string;
+  location?: string;
+  followers?: number;
+  following?: number;
+  bio?: string;
+  phone?: string;
 }
