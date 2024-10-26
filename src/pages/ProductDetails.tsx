@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MessageCircle, Flag, MapPin, Star, CheckCircle, CreditCard, Heart, Mail, Loader, Smartphone, Battery, Cpu, Award, Clock } from 'lucide-react';
+import { MessageCircle, Flag, MapPin, Star, CheckCircle, CreditCard, Heart, Mail, Loader, Smartphone, Battery, Cpu, Award, Clock, Share2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc, collection, getDocs, addDoc, updateDoc, arrayUnion, arrayRemove, setDoc, serverTimestamp, query, where, increment, Timestamp, runTransaction, deleteDoc, limit } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -55,6 +55,7 @@ const ProductDetails: React.FC = () => {
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [similarProducts, setSimilarProducts] = useState<Ad[]>([]);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   // Add this animation variant
   const fadeIn = {
     hidden: { opacity: 0 },
@@ -488,6 +489,41 @@ const ProductDetails: React.FC = () => {
     // You might want to update state or perform other actions based on the selected option
   };
 
+  const handleShare = async (platform: 'instagram' | 'whatsapp' | 'facebook') => {
+    if (!user || !product) return;
+
+    try {
+      // Save share information to the 'shares' table
+      const shareRef = collection(db, 'shares');
+      await addDoc(shareRef, {
+        userId: user.uid,
+        adId: product.id,
+        platform,
+        date: serverTimestamp(),
+      });
+
+      // Generate share URL (you may want to use a URL shortener service in a real application)
+      const shareUrl = `${window.location.origin}/product/${product.id}`;
+
+      // Open share dialog based on the platform
+      switch (platform) {
+      
+        case 'whatsapp':
+          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out this product: ${product.title} - ${shareUrl}`)}`, '_blank');
+          break;
+        case 'facebook':
+          window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+          break;
+      }
+
+      toast.success(`Shared on ${platform} successfully!`);
+      setIsShareModalOpen(false);
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast.error('Failed to share. Please try again.');
+    }
+  };
+
   if (loading) return <LoadingScreen />;
   if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
   if (!product) return <div className="text-center py-8">Product not found</div>;
@@ -596,6 +632,12 @@ const ProductDetails: React.FC = () => {
                 className="p-2 text-red-500 rounded-lg border border-red-500 hover:bg-red-50 transition-colors"
               >
                 <Flag size={20} />
+              </button>
+              <button
+                onClick={() => setIsShareModalOpen(true)}
+                className="p-2 text-blue-500 rounded-lg border border-blue-500 hover:bg-blue-50 transition-colors"
+              >
+                <Share2 size={20} />
               </button>
             </div>
             {insufficientFunds && (
@@ -940,6 +982,66 @@ const ProductDetails: React.FC = () => {
             ))}
           </div>
         </motion.div>
+
+        {/* Share Modal */}
+        <Transition appear show={isShareModalOpen} as={Fragment}>
+          <Dialog as="div" className="relative z-10" onClose={() => setIsShareModalOpen(false)}>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black bg-opacity-25" />
+            </Transition.Child>
+
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4 text-center">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-lg font-medium leading-6 text-gray-900 mb-4"
+                    >
+                      Share this product
+                    </Dialog.Title>
+                    <div className="mt-4 space-y-4">
+                      {/* <button
+                        onClick={() => handleShare('instagram')}
+                        className="w-full inline-flex justify-center items-center rounded-md border border-transparent bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2"
+                      >
+                        Share on Instagram
+                      </button> */}
+                      <button
+                        onClick={() => handleShare('whatsapp')}
+                        className="w-full inline-flex justify-center items-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+                      >
+                        Share on WhatsApp
+                      </button>
+                      <button
+                        onClick={() => handleShare('facebook')}
+                        className="w-full inline-flex justify-center items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      >
+                        Share on Facebook
+                      </button>
+                    </div>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
+            </div>
+          </Dialog>
+        </Transition>
       </motion.div>
     </>
   );
