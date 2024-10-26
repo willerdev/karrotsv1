@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { ArrowLeft, Send } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { db } from '../firebase';
+import { doc, increment, setDoc } from 'firebase/firestore';
 
 const genAI = new GoogleGenerativeAI("AIzaSyAbR1c7IgMxOSHQ-jB-xB3TjtWi0bEOkbo");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -10,10 +15,20 @@ interface Message {
 }
 
 const AIChat: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([
+    { content: "Ask anything KarrotAI 😊", sender: 'ai' }
+  ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     scrollToBottom();
@@ -25,7 +40,7 @@ const AIChat: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !user) return;
 
     const userMessage: Message = { content: input, sender: 'user' };
     setMessages(prev => [...prev, userMessage]);
@@ -36,6 +51,14 @@ const AIChat: React.FC = () => {
       const result = await model.generateContent(input);
       const aiMessage: Message = { content: result.response.text(), sender: 'ai' };
       setMessages(prev => [...prev, aiMessage]);
+
+      // Update AIusers table
+      const userRef = doc(db, 'AIusers', user.uid);
+      await setDoc(userRef, {
+        userId: user.uid,
+        timesUsed: increment(1)
+      }, { merge: true });
+
     } catch (error) {
       console.error('Error generating AI response:', error);
       const errorMessage: Message = { content: 'Sorry, I encountered an error. Please try again.', sender: 'ai' };
@@ -46,39 +69,47 @@ const AIChat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl ${
-              message.sender === 'user' ? 'ml-auto bg-blue-500 text-white' : 'mr-auto bg-white text-gray-800'
-            } rounded-lg p-3 shadow`}
-          >
-            {message.content}
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-      <form onSubmit={handleSubmit} className="p-4 bg-white border-t border-gray-200">
-        <div className="flex space-x-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Thinking...' : 'Send'}
+    <div className="flex justify-center bg-gray-100 min-h-screen">
+      <div className="w-full max-w-[600px] flex flex-col h-screen">
+        <header className="bg-orange-500 text-white py-4 px-4 flex items-center">
+          <button onClick={() => navigate(-1)} className="mr-4">
+            <ArrowLeft size={24} />
           </button>
+          <h1 className="text-xl font-semibold">Karrot AI</h1>
+        </header>
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`max-w-[80%] ${
+                message.sender === 'user' ? 'ml-auto bg-orange-500 text-white' : 'mr-auto bg-white text-gray-800'
+              } rounded-lg p-3 shadow`}
+            >
+              {message.content}
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
         </div>
-      </form>
+        <form onSubmit={handleSubmit} className="p-4 mb-11 bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0 max-w-[600px] mx-auto">
+          <div className="flex space-x-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type your message..."
+              className="flex-1 p-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500"
+              disabled={isLoading}
+            />
+            <button
+              type="submit"
+              className="p-2 bg-orange-500 text-white rounded-full hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50"
+              disabled={isLoading}
+            >
+              <Send size={20} />
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
