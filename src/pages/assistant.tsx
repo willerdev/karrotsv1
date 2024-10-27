@@ -4,7 +4,7 @@ import { ArrowLeft, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
-import { doc, increment, setDoc } from 'firebase/firestore';
+import { doc, increment, setDoc, getDoc } from 'firebase/firestore';
 
 const genAI = new GoogleGenerativeAI("AIzaSyAbR1c7IgMxOSHQ-jB-xB3TjtWi0bEOkbo");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -16,8 +16,9 @@ interface Message {
 
 const AIChat: React.FC = () => {
   const { user } = useAuth();
+  const [userName, setUserName] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([
-    { content: "Ask anything KarrotAI 😊", sender: 'ai' }
+    { content: `Hi ${userName} how can i help you today 😊`, sender: 'ai' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -27,6 +28,8 @@ const AIChat: React.FC = () => {
   useEffect(() => {
     if (!user) {
       navigate('/login');
+    } else {
+      fetchUserName();
     }
   }, [user, navigate]);
 
@@ -36,6 +39,25 @@ const AIChat: React.FC = () => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const fetchUserName = async () => {
+    if (user) {
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        setUserName(userData.name || 'there');
+        setMessages([
+          { content: `Hi ${userData.name || 'there'}, how can I help you today? 😊`, sender: 'ai' }
+        ]);
+      } else {
+        setUserName('there');
+        setMessages([
+          { content: "Hi there, how can I help you today? 😊", sender: 'ai' }
+        ]);
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
