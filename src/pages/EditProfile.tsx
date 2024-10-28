@@ -157,7 +157,11 @@ const EditProfile: React.FC = () => {
             >
               <option value="">Select a country</option>
               <option value="Nigeria">Nigeria</option>
+              <option value="South Africa">South Africa</option>
+              <option value="Rwanda">Rwanda</option>
               <option value="Kenya">Kenya</option>
+              <option value="Burundi">Burundi</option>
+              <option value="Tanzania">Tanzania</option>
               <option value="Ghana">Ghana</option>
               {/* Add more countries as needed */}
             </select>
