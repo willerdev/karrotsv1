@@ -4,6 +4,7 @@ import { auth, db } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { createUser } from '../services/userService';
 import { doc, getDoc } from 'firebase/firestore';
+import { requestNotificationPermission } from '../services/fcmService';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -45,24 +46,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      const userDocRef = doc(db, "users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
-      
-      if (!userDocSnap.exists()) {
-        await createUser(user.uid, {
-          name,
-          email,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-      }
+      await createUser(user.uid, {
+        name,
+        email,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Request notification permission and save FCM token
+      await requestNotificationPermission(user.uid);
     } catch (error: any) {
       console.error("Registration error:", error);
-      if (error.code === 'auth/email-already-in-use') {
-        throw new Error('Email is already in use. Please use a different email or try logging in.');
-      } else {
-        throw new Error(error.message || 'Registration failed. Please try again.');
-      }
+      throw error;
     }
   };
 

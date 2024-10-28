@@ -6,6 +6,7 @@ import { db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { FaImage, FaMapMarkerAlt, FaArrowLeft, FaPaperPlane, FaMicrophone, FaSmile, FaFilePdf } from 'react-icons/fa';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 interface ChatWindowProps {
   currentUser: User;
@@ -62,6 +63,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser }) => {
 
       setNewMessage('');
       setImageFile(null);
+
+      // Send notification
+      const functions = getFunctions();
+      const sendNotification = httpsCallable(functions, 'sendNotification');
+      await sendNotification({
+        userId: currentUser.uid,
+        title: 'New Message',
+        body: `${currentUser.name}: ${newMessage}`,
+        click_action: `/chat/${conversationId}`
+      });
     } catch (error) {
       console.error('Error sending message:', error);
     }

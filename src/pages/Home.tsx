@@ -9,6 +9,7 @@ import SearchBar from '../components/SearchBar';
 import LoadingScreen from '../components/LoadingScreen';
 import { Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import NotificationHandler from '../components/NotificationHandler';
 
 const scrollbarStyle: CSSProperties = {
   overflowY: 'auto',
@@ -141,6 +142,7 @@ const Home = () => {
         <Plus size={24} className={showFullButton ? 'mr-2' : ''} />
         {showFullButton && <span className="whitespace-nowrap">Post a karrot</span>}
       </Link>
+      <NotificationHandler />
     </div>
   );
 };

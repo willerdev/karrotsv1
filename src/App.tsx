@@ -54,6 +54,7 @@ import NotFound from './pages/NotFound';
 import OrderConfirmation from './pages/OrderConfirmation';
 import SettingsPage from './pages/SettingsPage';
 import FreeUpSpacePage from './pages/FreeUpSpacePage';
+import NotificationHandler from './components/NotificationHandler';
 
 // Remove the following line:
 import AIChat from './pages/assistant';
