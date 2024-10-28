@@ -9,7 +9,7 @@ import { Ad } from '../types/Ad';
 import LoadingScreen from '../components/LoadingScreen';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [userData, setUserData] = useState<User | null>(null);
   const [userAds, setUserAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +18,8 @@ const Profile = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
+      if (authLoading) return;
+      
       if (!user) {
         navigate('/login');
         return;
@@ -50,9 +52,9 @@ const Profile = () => {
     };
 
     fetchUserData();
-  }, [user]);
+  }, [user, authLoading]);
 
-  if (loading) return <LoadingScreen />;
+  if (loading || authLoading) return <LoadingScreen />;
   if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
   if (!userData) return <div className="text-center py-8">No user data available</div>;
 
