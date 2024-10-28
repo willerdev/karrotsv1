@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Settings, MapPin, Mail, Phone } from 'lucide-react';
+import { Settings, MapPin, Mail, Phone, LogOut } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { User } from '../types/User';
@@ -9,7 +9,7 @@ import { Ad } from '../types/Ad';
 import LoadingScreen from '../components/LoadingScreen';
 
 const Profile = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const [userData, setUserData] = useState<User | null>(null);
   const [userAds, setUserAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +54,15 @@ const Profile = () => {
     fetchUserData();
   }, [user, authLoading]);
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (err) {
+      console.error('Error logging out:', err);
+    }
+  };
+
   if (loading || authLoading) return <LoadingScreen />;
   if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
   if (!userData) return <div className="text-center py-8">No user data available</div>;
@@ -92,13 +101,22 @@ const Profile = () => {
               <p className="text-sm text-gray-600">Following</p>
             </div>
           </div>
-          <Link
-            to="/settings"
-            className="mt-4 inline-block bg-orange-500 text-white px-4 py-2 rounded-full hover:bg-orange-600 transition-colors duration-300"
-          >
-            <Settings className="inline-block mr-2" size={16} />
-            Settings
-          </Link>
+          <div className="flex justify-center gap-2">
+            <Link
+              to="/settings"
+              className="mt-4 inline-block bg-orange-500 text-white px-4 py-2 rounded-full hover:bg-orange-600 transition-colors duration-300"
+            >
+              <Settings className="inline-block mr-2" size={16} />
+              Settings
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="mt-4 inline-block bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors duration-300"
+            >
+              <LogOut className="inline-block mr-2" size={16} />
+              Logout
+            </button>
+          </div>
         </div>
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
