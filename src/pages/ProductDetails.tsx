@@ -728,16 +728,24 @@ const ProductDetails: React.FC = () => {
                     Verified Seller
                   </span>
                 )}
-                <button
-                  onClick={handleFollowSeller}
-                  className={`mt-2 px-4 py-2 rounded-lg ${
-                    isFollowing
-                      ? 'bg-gray-200 text-gray-700'
-                      : 'bg-orange-500 text-white'
-                  } hover:bg-orange-600 transition-colors`}
-                >
-                  {isFollowing ? 'Unfollow Seller' : 'Follow Seller'}
-                </button>
+              <button
+  onClick={handleFollowSeller}
+  disabled={user?.uid === product?.userId}
+  className={`mt-2 px-4 py-2 rounded-lg ${
+    user?.uid === product?.userId
+      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+      : isFollowing
+      ? 'bg-gray-200 text-gray-700'
+      : 'bg-orange-500 text-white'
+  } hover:bg-orange-600 transition-colors disabled:hover:bg-gray-300`}
+>
+  {user?.uid === product?.userId 
+    ? "Can't follow yourself" 
+    : isFollowing 
+    ? 'Unfollow Seller' 
+    : 'Follow Seller'
+  }
+</button>
               </div>
             )}
           </motion.div>
