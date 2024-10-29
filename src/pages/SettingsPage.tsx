@@ -44,6 +44,23 @@ const SettingsPage = () => {
         <h2 className="text-lg font-semibold mt-6 mb-2">Support & About</h2>
         <ul className="bg-white rounded-lg overflow-hidden shadow-sm">
           <SettingsItem icon={Settings} text="My Subscription" link="/subscription" />
+          <Link to="/purchases" className="flex items-center p-3 text-base font-bold text-gray-900 rounded-lg bg-gray-50 hover:bg-gray-100 group hover:shadow">
+            <svg 
+              className="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+              />  
+            </svg>
+            <span className="flex-1 ml-3 whitespace-nowrap">My Purchases</span>
+          </Link>
           <SettingsItem icon={HelpCircle} text="Help & Support" link="/support" />
           <SettingsItem icon={FileText} text="Terms and Policies" link="/terms" />
         </ul>

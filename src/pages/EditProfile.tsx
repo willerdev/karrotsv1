@@ -22,6 +22,7 @@ const EditProfile: React.FC = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -57,6 +58,7 @@ const EditProfile: React.FC = () => {
     e.preventDefault();
     if (!user) return;
 
+    setIsSaving(true);
     try {
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
@@ -66,10 +68,14 @@ const EditProfile: React.FC = () => {
         dateOfBirth,
         country,
       });
+      toast.success('Profile updated successfully');
       navigate('/profile');
     } catch (err) {
       console.error('Error updating user data:', err);
       setError('Failed to update user data. Please try again later.');
+      toast.error('Failed to update profile');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -227,9 +233,10 @@ const EditProfile: React.FC = () => {
 
           <button
             type="submit"
+            disabled={isSaving}
             className="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
           >
-            Save changes
+            {isSaving ? 'Saving...' : 'Save changes'}
           </button>
         </form>
       </div>
