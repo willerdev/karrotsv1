@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db } from '../firebase';
 import { User } from '../types/User';
 import { Camera, ChevronLeft } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const EditProfile: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +19,9 @@ const EditProfile: React.FC = () => {
   const [country, setCountry] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -68,6 +73,47 @@ const EditProfile: React.FC = () => {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedImage || !user) return;
+
+    try {
+      setUploadingImage(true);
+      const storage = getStorage();
+      const imageRef = ref(storage, `profile-pictures/${user.uid}/${Date.now()}_${selectedImage.name}`);
+      
+      await uploadBytes(imageRef, selectedImage);
+      const downloadUrl = await getDownloadURL(imageRef);
+      
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        profilePictureUrl: downloadUrl
+      });
+
+      setUserData(prev => prev ? { ...prev, profilePictureUrl: downloadUrl } : null);
+      toast.success('Profile picture updated successfully');
+    } catch (err) {
+      console.error('Error uploading profile picture:', err);
+      toast.error('Failed to update profile picture');
+    } finally {
+      setUploadingImage(false);
+      setSelectedImage(null);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedImage) {
+      handleImageUpload();
+    }
+  }, [selectedImage]);
+
   if (loading) return <div className="text-center py-8">Loading...</div>;
   if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
 
@@ -83,13 +129,25 @@ const EditProfile: React.FC = () => {
       <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
         <div className="relative w-32 h-32 mx-auto mb-6">
           <img
-            src={userData?.profilePictureUrl || 'https://via.placeholder.com/128'}
+            src={previewUrl || userData?.profilePictureUrl || 'https://via.placeholder.com/128'}
             alt="Profile"
             className="w-full h-full rounded-full object-cover"
           />
-          <button className="absolute bottom-0 right-0 bg-orange-500 text-white p-2 rounded-full">
+          <label 
+            htmlFor="profile-picture"
+            className={`absolute bottom-0 right-0 bg-orange-500 text-white p-2 rounded-full cursor-pointer 
+              hover:bg-orange-600 transition-colors ${uploadingImage ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
             <Camera size={20} />
-          </button>
+            <input
+              type="file"
+              id="profile-picture"
+              accept="image/*"
+              onChange={handleImageSelect}
+              disabled={uploadingImage}
+              className="hidden"
+            />
+          </label>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
