@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Carrot, Bell, MessageSquare, User, Wallet, Plus, Bot } from 'lucide-react';
+import { Carrot, Bell,  Wallet, Bot } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -59,11 +59,11 @@ const Header = () => {
         </Link>
         <nav className="flex items-center space-x-2 md:space-x-3">
           <IconButton icon={Bell} onClick={() => handleAuthAction('/notifications')} badge={unreadNotifications} />
-          <IconButton icon={MessageSquare} onClick={() => handleAuthAction('/chat')} />
+          {/* <IconButton icon={MessageSquare} onClick={() => handleAuthAction('/chat')} /> */}
           <IconButton icon={Wallet} onClick={() => handleAuthAction('/wallet')} />
           <IconButton icon={Bot} onClick={() => handleAuthAction('/assistant')} />
           
-          {user ? (
+          {/* {user ? (
             <Link to="/profile" className="bg-white rounded-full p-1.5 text-orange-500 hover:bg-orange-100 transition-colors">
               <User size={18} />
             </Link>
@@ -71,12 +71,12 @@ const Header = () => {
             <Link to="/login" className="bg-white rounded-full p-1.5 text-orange-500 hover:bg-orange-100 transition-colors">
               <User size={18} />
             </Link>
-          )}
+          )} */}
           <button
             onClick={() => handleAuthAction('/post-ad')}
             className="bg-white text-orange-500 p-1.5 rounded-full hover:bg-orange-100 transition-colors md:px-3 md:py-1.5 md:rounded-md md:text-sm md:font-semibold"
           >
-            <Plus size={18} className="md:hidden" />
+            {/* <Plus size={18} className="md:hidden" /> */}
             <span className="hidden md:inline">SELL</span>
           </button>
         </nav>
