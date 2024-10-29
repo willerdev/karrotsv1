@@ -123,7 +123,9 @@ const Profile = () => {
           <div className="space-y-2">
             <p className="flex items-center">
               <MapPin className="mr-2" size={16} />
-              {userData.location || (
+              {userData.country ? (
+                <span>{userData.country}</span>
+              ) : (
                 <Link to="/edit-profile" className="text-orange-500 hover:underline">
                   Add location
                 </Link>
@@ -135,7 +137,9 @@ const Profile = () => {
             </p>
             <p className="flex items-center">
               <Phone className="mr-2" size={16} />
-              {userData.phone || (
+              {userData.phoneNumber ? (
+                <span>{userData.phoneNumber}</span>
+              ) : (
                 <Link to="/edit-profile" className="text-orange-500 hover:underline">
                   Add phone number
                 </Link>
