@@ -1,5 +1,5 @@
 import React, { useState, useEffect, CSSProperties } from 'react';
-import { collection, getDocs, query, limit } from 'firebase/firestore';
+import { collection, getDocs, query, limit, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Ad } from '../types/Ad';
 import CategoryList from '../components/CategoryList';
@@ -39,28 +39,31 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullButton, setShowFullButton] = useState(true);
+  const [itemLimit, setItemLimit] = useState(8);
+  const [hasMore, setHasMore] = useState(true);
+
+  const fetchAds = async (currentLimit: number) => {
+    try {
+      const adsRef = collection(db, 'ads');
+      const q = query(adsRef, orderBy('createdAt', 'desc'), limit(currentLimit));
+      const querySnapshot = await getDocs(q);
+      const fetchedAds: Ad[] = [];
+      querySnapshot.forEach((doc) => {
+        fetchedAds.push({ id: doc.id, ...doc.data() } as Ad);
+      });
+      setAds(fetchedAds);
+      setHasMore(fetchedAds.length === currentLimit);
+    } catch (err) {
+      console.error('Error fetching ads:', err);
+      setError('Failed to load ads. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAds = async () => {
-      try {
-        const adsRef = collection(db, 'ads');
-        const q = query(adsRef, limit(8)); // Fetch 8 ads for the home page
-        const querySnapshot = await getDocs(q);
-        const fetchedAds: Ad[] = [];
-        querySnapshot.forEach((doc) => {
-          fetchedAds.push({ id: doc.id, ...doc.data() } as Ad);
-        });
-        setAds(fetchedAds);
-      } catch (err) {
-        console.error('Error fetching ads:', err);
-        setError('Failed to load ads. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAds();
-  }, []);
+    fetchAds(itemLimit);
+  }, [itemLimit]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -79,6 +82,10 @@ const Home = () => {
   const selectCountry = (country: string) => {
     setSelectedCountry(country);
     setShowLocationPopup(false);
+  };
+
+  const handleLoadMore = () => {
+    setItemLimit(prevLimit => prevLimit + 8);
   };
 
   return (
@@ -108,7 +115,22 @@ const Home = () => {
             <h2 className="text-2xl font-bold mb-4">Trending ads</h2>
             {loading && <LoadingScreen />}
             {error && <div className="text-red-500">{error}</div>}
-            {!loading && !error && <ProductGrid ads={ads} />}
+            {!loading && !error && (
+              <>
+                <ProductGrid ads={ads} />
+                {hasMore && (
+                  <div className="flex justify-center mt-8">
+                    <button
+                      onClick={handleLoadMore}
+                      className="bg-orange-500 text-white px-6 py-2 rounded-full hover:bg-orange-600 transition-colors"
+                      disabled={loading}
+                    >
+                      {loading ? 'Loading...' : 'Load More'}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -46,10 +46,10 @@ const CategoryGrid = () => {
           to={category.link || `/category/${category.name.toLowerCase().replace(/\s+/g, '-')}`}
           className="flex flex-col items-center border border-gray-300 p-2 rounded"
         >
-          <div className={`w-14 h-16 rounded-full flex items-center justify-center mb-2`}>
-            <img src={category.icon} alt={category.name} className={`w-12 h-12 ${category.name === 'Post ad' ? 'text-white' : 'text-gray-600'}`} />
+          <div className={`w-12 h-14 rounded-full flex items-center justify-center mb-2`}>
+            <img src={category.icon} alt={category.name} className={`w-16 h-18 ${category.name === 'Post ad' ? 'text-white' : 'text-gray-600'}`} />
           </div>
-          <span className="text-center text-sm">{category.name}</span>
+         
         </Link>
       ))}
     </div>

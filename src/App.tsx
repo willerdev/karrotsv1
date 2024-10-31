@@ -55,6 +55,7 @@ import OrderConfirmation from './pages/OrderConfirmation';
 import SettingsPage from './pages/SettingsPage';
 import FreeUpSpacePage from './pages/FreeUpSpacePage';
 import NotificationHandler from './components/NotificationHandler';
+import Offline from './pages/Offline';
 
 // Remove the following line:
 import AIChat from './pages/assistant';
@@ -97,6 +98,7 @@ function App() {
               <Route path="/free-up-space" element={<FreeUpSpacePage />} />
               <Route path="/category/:categoryName" element={<CategoryPage />} />
               <Route path="/about" element={<About />} />
+              <Route path="/offline" element={<Offline />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/press" element={<Press />} />
@@ -132,6 +134,7 @@ function App() {
               <Route path="/withdraw-history" element={<WithdrawHistory />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="*" element={<NotFound />} />
+              <Route path="/offline" element={<Offline />} />
             </Routes>
           </main>
           <Footer />

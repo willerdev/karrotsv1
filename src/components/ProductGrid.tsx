@@ -9,12 +9,13 @@ import toast from 'react-hot-toast'; // Add this import
 
 interface ProductGridProps {
   ads: Ad[];
+  loading?: boolean;
 }
 
 const CACHE_KEY = 'productGridCache';
 const CACHE_EXPIRY = 30 * 60 * 1000; // 30 minutes in milliseconds
 
-const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
+const ProductGrid: React.FC<ProductGridProps> = ({ ads, loading = false }) => {
   const { user } = useAuth();
   const [sellersData, setSellersData] = useState<{[key: string]: string}>({});
   const [savedAds, setSavedAds] = useState<string[]>([]);
@@ -118,7 +119,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
 
   const renderAdGrid = (adList: Ad[], title: string) => (
     <div className="mb-8">
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
         {adList.map((ad) => (
           <Link to={`/product/${ad.id}`} key={ad.id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
@@ -176,7 +177,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
       
       <h2 className="text-2xl font-bold mb-4">All Products</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        {ads.filter(ad => ad.status === 'active').slice(0, 8).map((ad) => (
+        {ads.filter(ad => ad.status === 'active').map((ad) => (
           <Link to={`/product/${ad.id}`} key={ad.id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
             <div className="relative">
               <img src={ad.images[0]} alt={ad.title} className="w-full h-40 object-cover" />
@@ -206,6 +207,11 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
           </Link>
         ))}
       </div>
+      {loading && (
+        <div className="flex justify-center mt-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        </div>
+      )}
     </div>
   );
 };

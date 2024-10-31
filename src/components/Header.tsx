@@ -55,7 +55,13 @@ const Header = () => {
           <div className="bg-white rounded-full p-1">
             <Carrot size={24} className="text-orange-500" />
           </div>
-          <span className="text-xl font-bold hidden md:inline">Karrots</span>
+          <span className="text-xl font-black tracking-wider md:inline font-logo transform hover:scale-105 transition-transform duration-200" 
+            style={{
+              textShadow: '2px 2px 4px rgba(0,0,0,0.1)',
+              fontFamily: '"Righteous", cursive'
+            }}>
+            Karr<span className="text-yellow-300">o</span>ts
+          </span>
         </Link>
         <nav className="flex items-center space-x-2 md:space-x-3">
           <IconButton icon={Bell} onClick={() => handleAuthAction('/notifications')} badge={unreadNotifications} />

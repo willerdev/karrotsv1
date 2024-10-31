@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
+
+/* Add this class if you prefer using Tailwind classes instead of inline styles */
+.font-logo {
+  font-family: 'Righteous', cursive;
+}
+
 body {
   font-family: 'Arial', sans-serif;
   padding: 0;
