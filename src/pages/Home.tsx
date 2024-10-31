@@ -44,7 +44,7 @@ const Home = () => {
     const fetchAds = async () => {
       try {
         const adsRef = collection(db, 'ads');
-        const q = query(adsRef, limit(500)); // Fetch 8 ads for the home page
+        const q = query(adsRef, limit(8)); // Fetch 8 ads for the home page
         const querySnapshot = await getDocs(q);
         const fetchedAds: Ad[] = [];
         querySnapshot.forEach((doc) => {

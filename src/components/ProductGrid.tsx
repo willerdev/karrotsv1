@@ -175,8 +175,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
       {renderAdGrid(vehicleAds, "Vehicles")}
       
       <h2 className="text-2xl font-bold mb-4">All Products</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4">
-        {ads.filter(ad => ad.status === 'active').map((ad) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        {ads.filter(ad => ad.status === 'active').slice(0, 8).map((ad) => (
           <Link to={`/product/${ad.id}`} key={ad.id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
             <div className="relative">
               <img src={ad.images[0]} alt={ad.title} className="w-full h-40 object-cover" />
@@ -190,33 +190,18 @@ const ProductGrid: React.FC<ProductGridProps> = ({ ads }) => {
                   fill={user && ad.savedBy?.includes(user.uid) ? 'currentColor' : 'none'}
                 />
               </button>
-              {ad.status === 'active' && ad.isVip && (
-                <span className="absolute top-2 left-2 bg-yellow-400 text-xs font-bold px-2 py-1 rounded">
-                  Verified
-                </span>
-              )}
-              {ad.status === 'underDeal' && (
-                <span className="absolute bottom-2 left-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded">
-                  May be bought
-                </span>
-              )}
             </div>
-            <div className="p-2 flex-grow flex flex-col justify-between">
+            <div className="p-4 flex-grow flex flex-col justify-between">
               <div>
-                <h1 className="font-semibold text-xl mb-1 truncate">{ad.title}</h1>
-                <p className="text-orange-500 font-bold text-sm">{ad.price.toLocaleString()} Frw </p>
+                <h3 className="font-semibold text-sm mb-1 truncate">{ad.title}</h3>
+                <p className="text-orange-500 font-bold">{ad.price.toLocaleString()} Frw</p>
               </div>
-              {/* <div>
-                <p className="bg-gray-100 text-gray-700 text-xs p-1 rounded-md mb-1 flex items-center">
-                  <MapPin size={12} className="mr-1" /> 
-                  <span className="font-semibold mr-2">{ad.location}</span>
-                  
-                  <Tag size={12} className="mr-1" /> <span className="text-gray-600">{ad.condition}</span>
+              <div className="mt-2">
+                <p className="text-gray-500 text-xs flex items-center">
+                  <MapPin size={12} className="mr-1" />
+                  {ad.location}
                 </p>
-                <p className="text-orange-500 text-xs truncate flex items-center">
-                  <User size={16} className="mr-1" /> {sellersData[ad.userId] || 'Loading...'}
-                </p>
-              </div> */}
+              </div>
             </div>
           </Link>
         ))}
