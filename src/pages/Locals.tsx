@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import LocalProductGrid from '../components/LocalProductGrid';
 import { Ad } from '../types/Ad';
-import { collection, query, limit, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, limit, getDocs, orderBy, startAfter } from 'firebase/firestore';
 import { db } from '../firebase';
 import LoadingScreen from '../components/LoadingScreen';
 import { FaMapMarkerAlt, FaArrowLeft, FaPlus } from 'react-icons/fa';
@@ -17,23 +17,41 @@ const Locals = () => {
   const [imageError, setImageError] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredAds, setFilteredAds] = useState<Ad[]>([]);
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Move fetchLocalAds outside useEffect and make it a component-level function
+  const fetchLocalAds = async (isLoadMore = false) => {
+    try {
+      const adsRef = collection(db, 'ads');
+      let q = query(adsRef, orderBy('createdAt', 'desc'), limit(10));
+
+      if (isLoadMore && lastDoc) {
+        q = query(adsRef, orderBy('createdAt', 'desc'), startAfter(lastDoc), limit(10));
+      }
+
+      const querySnapshot = await getDocs(q);
+      const ads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
+      
+      setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1]);
+      setHasMore(querySnapshot.docs.length === 10);
+
+      if (isLoadMore) {
+        setLocalAds(prevAds => [...prevAds, ...ads]);
+      } else {
+        setLocalAds(ads);
+      }
+    } catch (err) {
+      console.error('Error fetching local ads:', err);
+      setError('Failed to load local ads. Please try again later.');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchLocalAds = async () => {
-      try {
-        const adsRef = collection(db, 'ads');
-        const q = query(adsRef, orderBy('createdAt', 'desc'), limit(10));
-        const querySnapshot = await getDocs(q);
-        const ads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
-        setLocalAds(ads);
-      } catch (err) {
-        console.error('Error fetching local ads:', err);
-        setError('Failed to load local ads. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchLocalAds();
 
     const handleScroll = () => {
@@ -53,6 +71,12 @@ const Locals = () => {
     );
     setFilteredAds(filtered);
   }, [searchTerm, localAds]);
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    await fetchLocalAds(true);
+  };
 
   if (loading) return <LoadingScreen />;
   if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
@@ -95,6 +119,29 @@ const Locals = () => {
       </div>
 
       <LocalProductGrid ads={filteredAds} />
+
+      {hasMore && (
+        <div className="flex justify-center mt-8 mb-20">
+          <button
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="bg-orange-500 text-white px-6 py-2 rounded-full hover:bg-orange-600 transition-colors disabled:opacity-50"
+          >
+            {loadingMore ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Loading...
+              </span>
+            ) : (
+              'Load More'
+            )}
+          </button>
+        </div>
+      )}
+
       <button
         ref={buttonRef}
         onClick={() => navigate('/post-ad')}
