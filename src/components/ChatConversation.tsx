@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
-import { Send, ArrowLeft } from 'lucide-react';
+import { Send, ArrowLeft, Share2, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -35,6 +35,7 @@ const ChatConversation = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [ad, setAd] = useState<Ad | null>(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [showShareTooltip, setShowShareTooltip] = useState(false);
 
   useEffect(() => {
     if (!conversationId) return;
@@ -102,17 +103,49 @@ const ChatConversation = () => {
     }
   };
 
+  const handleShare = async () => {
+    try {
+      const shareUrl = `${window.location.origin}/product/${conversation?.adId}`;
+      await navigator.clipboard.writeText(shareUrl);
+      setShowShareTooltip(true);
+      setTimeout(() => setShowShareTooltip(false), 2000);
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
   return (
     <div className="flex flex-col h-[90vh] bg-gray-50">
-      <div className="bg-white shadow-sm p-4 flex items-center">
-        <Link to="/chat" className="mr-4">
-          <ArrowLeft className="text-gray-600" />
-        </Link>
-        <h1 className="text-xl font-semibold">
-          {ad?.title} {conversation?.updatedAt && 
-            `- ${conversation.updatedAt.toDate().toLocaleDateString()}`
-          }
-        </h1>
+      <div className="bg-white shadow-sm p-4 flex items-center justify-between">
+        <div className="flex items-center">
+          <Link to="/chat" className="mr-4">
+            <ArrowLeft className="text-gray-600" />
+          </Link>
+          <h1 className="text-xl font-semibold">
+            {ad?.title} {conversation?.updatedAt && 
+              `- ${conversation.updatedAt.toDate().toLocaleDateString()}`
+            }
+          </h1>
+        </div>
+        <div className="flex items-center space-x-2 relative">
+          <Link
+            to={`/product/${conversation?.adId}`}
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <ExternalLink size={20} />
+          </Link>
+          <button
+            onClick={handleShare}
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <Share2 size={20} />
+          </button>
+          {showShareTooltip && (
+            <div className="absolute right-0 top-full mt-2 bg-black text-white text-sm py-1 px-2 rounded shadow-lg whitespace-nowrap">
+              Link copied to clipboard!
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-hidden p-4">
@@ -129,7 +162,7 @@ const ChatConversation = () => {
               className={`flex ${message.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[70%] rounded-lg p-3 ${
+                className={`max-w-[70%] rounded-lg p-3 mb-2 ${
                   message.senderId === user?.uid
                     ? 'bg-orange-500 text-white'
                     : 'bg-white text-gray-800'

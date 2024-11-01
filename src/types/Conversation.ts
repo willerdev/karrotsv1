@@ -7,5 +7,6 @@ export interface Conversation {
     lastMessage?: string;
     updatedAt?: any; // Consider using a more specific type for dates
     unreadCount: number;
+    adId?: string;  // Optional string property
 
   }

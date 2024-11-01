@@ -56,6 +56,9 @@ const ProductDetails: React.FC = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [similarProducts, setSimilarProducts] = useState<Ad[]>([]);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [showSafetyTips, setShowSafetyTips] = useState(() => {
+    return localStorage.getItem('hideSafetyTips') !== 'true';
+  });
   // Add this animation variant
   const fadeIn = {
     hidden: { opacity: 0 },
@@ -175,7 +178,7 @@ const ProductDetails: React.FC = () => {
     // Fetch any products as similar products
     const fetchSimilarProducts = async () => {
       const adsRef = collection(db, 'ads');
-      const q = query(adsRef, limit(10));
+      const q = query(adsRef, limit(4));
       const querySnapshot = await getDocs(q);
       const similarProductsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Ad));
       setSimilarProducts(similarProductsData);
@@ -579,6 +582,11 @@ const ProductDetails: React.FC = () => {
       console.error('Error marking ad as sold:', error);
       toast.error('Failed to mark ad as sold. Please try again.');
     }
+  };
+
+  const dismissSafetyTips = () => {
+    localStorage.setItem('hideSafetyTips', 'true');
+    setShowSafetyTips(false);
   };
 
   if (loading) return <LoadingScreen />;
@@ -1011,22 +1019,31 @@ const ProductDetails: React.FC = () => {
           </Dialog>
         </Transition>
 
-        {/* Safety Tips */}
-        <motion.div 
-          className="mt-4 bg-blue-50 p-4 rounded-lg"
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-        >
-          <h2 className="text-xl font-bold mb-4">Safety Tips</h2>
-          <ul className="list-disc pl-5 space-y-2">
-            <li>Avoid paying in advance, even for delivery</li>
-            <li>Meet with the seller at a safe public place</li>
-            <li>Inspect the item and ensure it's exactly what you want</li>
-            <li>Make sure that the packed item is the one you've inspected</li>
-            <li>Only pay if you're satisfied</li>
-          </ul>
-        </motion.div>
+        {showSafetyTips && (
+          <motion.div 
+            className="mt-4 bg-blue-50 p-4 rounded-lg relative"
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            <button
+              onClick={dismissSafetyTips}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+              aria-label="Dismiss safety tips"
+            >
+              ×
+            </button>
+            <details className="cursor-pointer">
+              <summary className="text-lg font-semibold mb-2">Safety Tips</summary>
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                <li>Avoid advance payments</li>
+                <li>Meet in public places</li>
+                <li>Verify item condition</li>
+                <li>Pay only when satisfied</li>
+              </ul>
+            </details>
+          </motion.div>
+        )}
 
         {/* Similar Products */}
         <motion.div 
@@ -1036,7 +1053,7 @@ const ProductDetails: React.FC = () => {
           transition={{ duration: 0.5, delay: 1 }}
         >
           <h2 className="text-xl font-bold mb-4">Similar Products</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {similarProducts.map((similarProduct) => (
               <div key={similarProduct.id} className="border rounded-lg p-4">
                 <img 

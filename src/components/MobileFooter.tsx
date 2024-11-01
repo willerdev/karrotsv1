@@ -12,42 +12,42 @@ const MobileFooter = () => {
   };
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-gray-50 border-t border-gray-200 py-2 px-3">
+    <footer className="fixed bottom-0 left-0 right-0 bg-gray-50 border-t border-gray-200 py-2 px-3 md:hidden">
       <div className="grid grid-cols-5 gap-2">
         <Link 
           to="/" 
           className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${isActive('/')}`}
         >
           <Home size={22} />
-          <span className="text-[10px] mt-1 font-medium hidden">Home</span>
+          <span className="text-[10px] mt-1 font-medium">Home</span>
         </Link>
         <Link 
           to="/locals" 
           className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${isActive('/locals')}`}
         >
           <Map size={22} />
-          <span className="text-[10px] mt-1 font-medium hidden">My Local</span>
+          <span className="text-[10px] mt-1 font-medium">My Local</span>
         </Link>
         <Link 
           to="/explore" 
           className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${isActive('/explore')}`}
         >
           <Compass size={22} />
-          <span className="text-[10px] mt-1 font-medium hidden">Explore</span>
+          <span className="text-[10px] mt-1 font-medium">Explore</span>
         </Link>
         <Link 
           to="/chat" 
           className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${isActive('/chat')}`}
         >
           <MessageCircle size={22} />
-          <span className="text-[10px] mt-1 font-medium hidden">Chats</span>
+          <span className="text-[10px] mt-1 font-medium">Chats</span>
         </Link>
         <Link 
           to="/profile" 
           className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${isActive('/profile')}`}
         >
           <User size={22} />
-          <span className="text-[10px] mt-1 font-medium hidden">Karrot</span>
+          <span className="text-[10px] mt-1 font-medium">Profile</span>
         </Link>
       </div>
     </footer>

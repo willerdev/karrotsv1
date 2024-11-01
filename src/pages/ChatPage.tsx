@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Conversation } from '../types/Conversation';
 import { db } from '../firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -14,6 +14,7 @@ const ChatPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [userNames, setUserNames] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(true);
+  const [adTitles, setAdTitles] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (!user) return;
@@ -29,16 +30,29 @@ const ChatPage = () => {
         ...doc.data()
       } as Conversation));
 
-      // Fetch user names for all participants
+      // Fetch user names and ad titles
       const names: { [key: string]: string } = {};
+      const titles: { [key: string]: string } = {};
+
       for (const conv of fetchedConversations) {
         const otherUserId = conv.participants.find(id => id !== user.uid);
         if (otherUserId && !names[otherUserId]) {
           const userData = await getUserById(otherUserId);
           names[otherUserId] = userData?.name || 'Unknown User';
         }
+
+        // Fetch ad title if conversation has adId
+        if (conv.adId) {
+          const adRef = doc(db, 'ads', conv.adId);
+          const adDoc = await getDoc(adRef);
+          if (adDoc.exists()) {
+            titles[conv.id] = adDoc.data().title || 'Unknown Ad';
+          }
+        }
       }
+
       setUserNames(names);
+      setAdTitles(titles);
       setConversations(fetchedConversations);
       setLoading(false);
     });
@@ -91,8 +105,13 @@ const ChatPage = () => {
                     {userName?.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-800">{userName}</h3>
-                    <p className="text-sm text-gray-500 truncate">{conv.lastMessage || 'Start a conversation'}</p>
+                    <h3 className="font-semibold text-gray-800">
+                      {adTitles[conv.id] 
+                        ? `${adTitles[conv.id]} - ${new Date(conv.updatedAt?.toDate()).toLocaleDateString()}`
+                        : userName
+                      }
+                    </h3>
+                    <p className="text-sm text-gray-500 truncate">{conv.lastMessage || 'Resume chat'}</p>
                   </div>
                   {conv.unreadCount > 0 && (
                     <div className="bg-orange-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">

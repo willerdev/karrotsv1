@@ -101,22 +101,7 @@ const Profile = () => {
               <p className="text-sm text-gray-600">Following</p>
             </div>
           </div>
-          <div className="flex justify-center gap-2">
-            <Link
-              to="/settings"
-              className="mt-4 inline-block bg-orange-500 text-white px-4 py-2 rounded-full hover:bg-orange-600 transition-colors duration-300"
-            >
-              <Settings className="inline-block mr-2" size={16} />
-              Settings
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="mt-4 inline-block bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors duration-300"
-            >
-              <LogOut className="inline-block mr-2" size={16} />
-              Logout
-            </button>
-          </div>
+         
         </div>
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
@@ -148,7 +133,7 @@ const Profile = () => {
           </div>
         </div>
         <div>
-          <h2 className="text-xl font-semibold mb-4">My Marketplace</h2>
+          <h2 className="text-xl font-semibold mb-15">My Marketplace</h2>
           <div className="grid grid-cols-2 gap-4">
             <Link 
               to="/my-ads" 
@@ -175,6 +160,22 @@ const Profile = () => {
                 <p className="text-gray-500 text-sm mt-1">View shop</p>
               </div>
             </Link>
+          </div>
+          <div className="flex justify-center gap-2">
+            <Link
+              to="/settings"
+              className="mt-4 inline-block bg-orange-500 text-white px-4 py-2 rounded-full hover:bg-orange-600 transition-colors duration-300"
+            >
+              <Settings className="inline-block mr-2" size={16} />
+              Settings
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="mt-4 inline-block bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors duration-300"
+            >
+              <LogOut className="inline-block mr-2" size={16} />
+              Logout
+            </button>
           </div>
         </div>
       </div>

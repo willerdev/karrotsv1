@@ -39,7 +39,7 @@ const ConversationList: React.FC<ConversationListProps> = ({ currentUser, onSele
       <ul>
         {conversations.map(conv => (
           <li key={conv.id} onClick={() => onSelectConversation(conv.id)}>
-            <h3>{conv.name}</h3>
+            <h3>{conv.name}ss</h3>
             <p>{conv.lastMessage}</p>
           </li>
         ))}

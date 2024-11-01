@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
@@ -16,7 +16,9 @@ const Login = () => {
     setIsLoading(true);
     try {
       await login(email, password);
-      navigate('/locals');
+      const location = useLocation();
+      const from = location.state?.from?.pathname || '/locals';
+      navigate(from);
     } catch (err) {
       setError('Failed to login. Please check your credentials.');
     } finally {

@@ -57,6 +57,7 @@ import FreeUpSpacePage from './pages/FreeUpSpacePage';
 import NotificationHandler from './components/NotificationHandler';
 import Offline from './pages/Offline';
 import ChatConversation from './components/ChatConversation';
+import MobileAuthRoute from './components/MobileAuthRoute';
 
 // Remove the following line:
 import AIChat from './pages/assistant';
@@ -78,72 +79,28 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-grow">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/chat" element={<ChatPage />} />
-              <Route path="/chat/:conversationId" element={<ChatConversation />} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/post-ad" element={<ProtectedRoute><PostAd /></ProtectedRoute>} />
-              <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/assistant" element={<AIChat />} />
-              <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
-              <Route path="/saved" element={<ProtectedRoute><SavedAds /></ProtectedRoute>} />
-              <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-              <Route path="/delivery-services" element={<DeliveryServices />} />
-              <Route path="/product/:id" element={<ProductDetails />} />
-              <Route path="/free-up-space" element={<FreeUpSpacePage />} />
-              <Route path="/category/:categoryName" element={<CategoryPage />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/offline" element={<Offline />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/careers" element={<Careers />} />
-              <Route path="/press" element={<Press />} />
-              <Route path="/order-tracking" element={<OrderTracking />} />
-              <Route path="/payment/:userPlanId" element={<Payment />} />
-              <Route path="/order-confirmation/:purchaseId" element={<OrderConfirmation />} />
-              <Route path="/help" element={<Help />} />
-              <Route path="/safety" element={<Safety />} />
-              <Route path="/community" element={<Community />} />
-              <Route path="/chat/:conversationId?" element={<ChatPage />} />
-              <Route path="/cookies" element={<Cookies />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/subscription" element={<Subscription />} />
-              <Route path="/search" element={<SearchPage />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/locals" element={<Locals />} />
-              <Route path="/myads" element={<ProtectedRoute><MyAds /></ProtectedRoute>} />
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
-              <Route path="/recently-viewed/:category" element={<ProtectedRoute><RecentlyViewed /></ProtectedRoute>} />
-              <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
-              <Route path="/listings" element={<ProtectedRoute><Listings /></ProtectedRoute>} />
-              <Route path="/purchases" element={<ProtectedRoute><Purchases /></ProtectedRoute>} />
-              <Route path="/savings" element={<ProtectedRoute><Savings /></ProtectedRoute>} />
-              <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
-              <Route path="/whats-new" element={<WhatsNew />} />
-              <Route path="/recently-viewed" element={<RecentlyViewed />} />
-              <Route path="/shop-settings" element={<ShopSettings />} />
-              <Route path="/shop/:shopId" element={<KarrotPage />} />
-              <Route path="/support" element={<Support />} />
-              <Route path="/earn-with-karrot" element={<EarnWithKarrot />} />
-              <Route path="/deposit-history" element={<DepositHistory />} />
-              <Route path="/withdraw-history" element={<WithdrawHistory />} />
-              <Route path="/transactions" element={<Transactions />} />
-              <Route path="*" element={<NotFound />} />
-              <Route path="/offline" element={<Offline />} />
-            </Routes>
-          </main>
-          <Footer />
-          <div className="md:hidden">
-            <MobileFooter />
+        <MobileAuthRoute>
+          <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-grow">
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/" element={<Home />} />
+                <Route path="/chat" element={<ChatPage />} />
+                <Route path="/chat/:conversationId" element={<ChatConversation />} />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/post-ad" element={<ProtectedRoute><PostAd /></ProtectedRoute>} />
+                <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/assistant" element={<AIChat />} />
+                <Route path="/edit-profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+                <Route path="/saved" element={<ProtectedRoute><SavedAds /></ProtectedRoute>} />
+                <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+              </Routes>
+            </main>
           </div>
-        </div>
+        </MobileAuthRoute>
       </Router>
     </AuthProvider>
   );
