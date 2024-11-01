@@ -12,7 +12,7 @@ const MobileFooter = () => {
   };
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-gray-50 border-t border-gray-200 py-2 px-3 md:hidden">
+    <footer className="fixed bottom-0 left-0 right-0 bg-gray-50 border-t border-gray-200 py-2 px-3 ">
       <div className="grid grid-cols-5 gap-2">
         <Link 
           to="/" 
