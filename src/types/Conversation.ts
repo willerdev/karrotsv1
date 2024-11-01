@@ -8,5 +8,7 @@ export interface Conversation {
     updatedAt?: any; // Consider using a more specific type for dates
     unreadCount: number;
     adId?: string;  // Optional string property
+    adImage?: string;
+    images?: string[];
 
   }

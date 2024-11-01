@@ -15,6 +15,7 @@ const ChatPage = () => {
   const [userNames, setUserNames] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(true);
   const [adTitles, setAdTitles] = useState<{ [key: string]: string }>({});
+  const [adImages, setAdImages] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (!user) return;
@@ -46,7 +47,14 @@ const ChatPage = () => {
           const adRef = doc(db, 'ads', conv.adId);
           const adDoc = await getDoc(adRef);
           if (adDoc.exists()) {
-            titles[conv.id] = adDoc.data().title || 'Unknown Ad';
+            const adData = adDoc.data();
+            titles[conv.id] = adData.title || 'Unknown Ad';
+            if (adData.images?.[0]) {
+              setAdImages(prev => ({
+                ...prev,
+                [conv.id]: adData.images[0]
+              }));
+            }
           }
         }
       }
@@ -101,8 +109,25 @@ const ChatPage = () => {
                 className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all p-4"
               >
                 <Link to={`/chat/${conv.id}`} className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-500 font-semibold">
-                    {userName?.split(' ').map(n => n[0]).join('')}
+                  <div className="w-12 h-12 rounded-full overflow-hidden">
+                    {adTitles[conv.id] ? (
+                      <img 
+                        src={adImages[conv.id]} 
+                        alt={adTitles[conv.id]}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const parent = e.currentTarget.parentElement;
+                          if (!parent) return;
+                          e.currentTarget.style.display = 'none';
+                          parent.classList.add('bg-orange-100', 'flex', 'items-center', 'justify-center', 'text-orange-500', 'font-semibold');
+                          parent.innerHTML = userName?.split(' ').map(n => n[0]).join('');
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-orange-100 flex items-center justify-center text-orange-500 font-semibold">
+                        {userName?.split(' ').map(n => n[0]).join('')}
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-800">
