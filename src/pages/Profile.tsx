@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Settings, MapPin, Mail, Phone, LogOut } from 'lucide-react';
+import { Settings, MapPin, Mail, Phone, LogOut, ShoppingBag, Store } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { User } from '../types/User';
@@ -148,23 +148,33 @@ const Profile = () => {
           </div>
         </div>
         <div>
-          <h2 className="text-xl font-semibold mb-4">My Ads</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-2 gap-6">
-            {userAds.map((ad) => (
-              <Link to={`/product/${ad.id}`} key={ad.id} className="block">
-                <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:scale-105">
-                  <img
-                    src={ad.images[0]}
-                    alt={ad.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-2">{ad.title}</h3>
-                    <p className="text-orange-500 font-bold">{ad.price} Frw</p>
-                  </div>
+          <h2 className="text-xl font-semibold mb-4">My Marketplace</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <Link 
+              to="/my-ads" 
+              className="flex items-center justify-center bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300"
+            >
+              <div className="text-center">
+                <div className="bg-orange-100 rounded-full p-4 mb-3 mx-auto w-fit">
+                  <ShoppingBag className="w-8 h-8 text-orange-500" />
                 </div>
-              </Link>
-            ))}
+                <h3 className="font-semibold text-lg">My Ads</h3>
+                <p className="text-gray-500 text-sm mt-1">{userAds.length} items</p>
+              </div>
+            </Link>
+
+            <Link 
+              to="/shop" 
+              className="flex items-center justify-center bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300"
+            >
+              <div className="text-center">
+                <div className="bg-orange-100 rounded-full p-4 mb-3 mx-auto w-fit">
+                  <Store className="w-8 h-8 text-orange-500" />
+                </div>
+                <h3 className="font-semibold text-lg">My Shop</h3>
+                <p className="text-gray-500 text-sm mt-1">View shop</p>
+              </div>
+            </Link>
           </div>
         </div>
       </div>

@@ -13,7 +13,7 @@ export const requestNotificationPermission = async (userId: string) => {
         vapidKey: "BJJTN0Na3Ob0e322cEsQDgvs6Hka6wB5Oe84TiJzV9vAf_gh5zRgge4IlmXnJQxtdYFA7-TYdoZIUNj2zsxEuxM"
       });
 
-      console.log('FCM Registration Token:', token); // Add this line to log the token
+   //   console.log('FCM Registration Token:', token); // Add this line to log the token
 
       // Save the token to the user's document
       const userRef = doc(db, "users", userId);

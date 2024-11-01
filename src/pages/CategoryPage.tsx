@@ -136,8 +136,24 @@ const CategoryPage = () => {
       {error && <div className="text-red-500">{error}</div>}
       {!loading && !error && (
         <>
-          <p className="mb-4">{ads.length} ads found</p>
-          <ProductGrid ads={ads} />
+          {ads.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-4">
+              <img 
+                src="https://i.imgur.com/5ck0U9M.png" 
+                alt="Karrots Logo" 
+                className="w-32 h-32 mx-auto mb-8"
+              />
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">No Ads Found</h2>
+              <p className="text-gray-600">
+                There are currently no ads in this category
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="mb-4">{ads.length} ads found</p>
+              <ProductGrid ads={ads} />
+            </>
+          )}
         </>
       )}
     </div>
