@@ -103,7 +103,7 @@ const Profile = () => {
           </div>
          
         </div>
-        <div className="mb-8">
+        {/* <div className="mb-8">
 
           <div className="space-y-2">
             <p className="flex items-center">
@@ -131,12 +131,12 @@ const Profile = () => {
               )}
             </p>
           </div>
-        </div>
+        </div> */}
         <div>
          
           <div className="grid grid-cols-2 gap-4">
             <Link 
-              to="/my-ads" 
+              to="/myads" 
               className="flex items-center justify-center bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300"
             >
               <div className="text-center">
@@ -149,7 +149,7 @@ const Profile = () => {
             </Link>
 
             <Link 
-              to="/shop" 
+              to="/shop-settings" 
               className="flex items-center justify-center bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300"
             >
               <div className="text-center">
