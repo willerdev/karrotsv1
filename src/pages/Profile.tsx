@@ -104,7 +104,7 @@ const Profile = () => {
          
         </div>
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
+
           <div className="space-y-2">
             <p className="flex items-center">
               <MapPin className="mr-2" size={16} />
@@ -133,7 +133,7 @@ const Profile = () => {
           </div>
         </div>
         <div>
-          <h2 className="text-xl font-semibold mb-15">My Marketplace</h2>
+         
           <div className="grid grid-cols-2 gap-4">
             <Link 
               to="/my-ads" 
