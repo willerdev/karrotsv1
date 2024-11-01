@@ -19,35 +19,35 @@ const MobileFooter = () => {
           className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${isActive('/')}`}
         >
           <Home size={22} />
-          <span className="text-[10px] mt-1 font-medium">Home</span>
+          <span className="text-[10px] mt-1 font-medium hidden">Home</span>
         </Link>
         <Link 
           to="/locals" 
           className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${isActive('/locals')}`}
         >
           <Map size={22} />
-          <span className="text-[10px] mt-1 font-medium">My Local</span>
+          <span className="text-[10px] mt-1 font-medium hidden">My Local</span>
         </Link>
         <Link 
           to="/explore" 
           className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${isActive('/explore')}`}
         >
           <Compass size={22} />
-          <span className="text-[10px] mt-1 font-medium">Explore</span>
+          <span className="text-[10px] mt-1 font-medium hidden">Explore</span>
         </Link>
         <Link 
           to="/chat" 
           className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${isActive('/chat')}`}
         >
           <MessageCircle size={22} />
-          <span className="text-[10px] mt-1 font-medium">Chats</span>
+          <span className="text-[10px] mt-1 font-medium hidden">Chats</span>
         </Link>
         <Link 
           to="/profile" 
           className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ${isActive('/profile')}`}
         >
           <User size={22} />
-          <span className="text-[10px] mt-1 font-medium">My Karrot</span>
+          <span className="text-[10px] mt-1 font-medium hidden">Karrot</span>
         </Link>
       </div>
     </footer>

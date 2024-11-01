@@ -56,6 +56,7 @@ import SettingsPage from './pages/SettingsPage';
 import FreeUpSpacePage from './pages/FreeUpSpacePage';
 import NotificationHandler from './components/NotificationHandler';
 import Offline from './pages/Offline';
+import ChatConversation from './components/ChatConversation';
 
 // Remove the following line:
 import AIChat from './pages/assistant';
@@ -84,7 +85,8 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+              <Route path="/chat" element={<ChatPage />} />
+              <Route path="/chat/:conversationId" element={<ChatConversation />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/post-ad" element={<ProtectedRoute><PostAd /></ProtectedRoute>} />
               <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />

@@ -13,7 +13,7 @@ const SearchBar = () => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const navigate = useNavigate();
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const searchBarRef = useRef<HTMLDivElement>(null);
+  const searchBarRef = useRef<HTMLFormElement>(null);
 
   const handleLocationInfo = (e: React.MouseEvent, location: string) => {
     e.preventDefault();

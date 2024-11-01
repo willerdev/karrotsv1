@@ -1,8 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 const Offline = () => {
+  // Disable scrolling when component mounts
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    
+    // Re-enable scrolling when component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-4">
+    <div className="fixed inset-0 bg-orange-50 flex flex-col items-center justify-center p-4">
       <div className="text-center">
         <img 
           src="https://i.imgur.com/5ck0U9M.png" 
